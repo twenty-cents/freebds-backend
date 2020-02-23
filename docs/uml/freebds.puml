@@ -1,0 +1,152 @@
+@startuml
+package freebds <<Rectangle>> #LightGray {
+class User {
+    - username
+    - password
+    - email
+    - role
+    - createdOn
+    - updatedOn
+    - lastLogin
+}
+
+class Role {
+    - id
+    - name
+}
+
+class Library {
+    - id
+    - name
+    - description
+}
+
+class UserLibrary {
+    - idUser
+    - idLibrary
+}
+
+class LibraryContent {
+    - id
+    - isPhysical
+    - isNumeric
+    - localStorage
+}
+
+User -- Role
+User - Library
+(User, Library) . UserLibrary
+}
+
+package referential <<Rectangle>> #GreenYellow {
+
+note as N1
+  This note is <u>also</u>
+  <b><color:royalBlue>on several</color>
+  <s>words</s> lines
+  And this is hosted by
+end note
+
+class Author {
+    - id
+    - externalId
+    - lastname
+    - firstname
+    - nickname
+    - nationality
+    - birthdate
+    - deceaseDate
+    - biography
+    - siteUrl
+    - photoUrl
+    - photoThumbnailUrl
+    - scrapUrl
+}
+
+class Serie {
+    - id
+    - externalId
+    - title
+    - category
+    - status
+    - origin
+    - langage
+    - collection
+    - synopsys
+    - pictureUrl
+    - pictureThumbnailUrl
+    - scrapUrl
+}
+
+class Category {
+    - id
+    - name
+}
+
+class SerieCategory {
+    - idSerie
+    - idCategorie
+}
+
+class GraphicNovel {
+    - id
+    - externalId
+    - tome
+    - noEdition
+    - title
+    - publicationDate
+    - releaseDate
+    - isbn
+    - isFirstEdition
+    - isIntegral
+    - isBroche
+    - infosEdition
+    - reeditionsUrl
+    - coverPictureUrl
+    - coverThumbnailUrl
+    - backCoverPictureUrl
+    - backCoverThumbnailUrl
+    - pagePictureUrl
+    - pageThumbnailUrl
+    - scrapUrl
+}
+
+class GraphicNovelAuthors {
+    - idGraphicNovel
+    - idAuthor
+    - role
+}
+
+class Publisher {
+    - id
+    - name
+    - siteUrl
+}
+
+Serie "0..n" - "1..1" GraphicNovel : contains
+(Serie, Category) . SerieCategory
+GraphicNovel - Author : is written by
+(GraphicNovel, Author) . GraphicNovelAuthors
+GraphicNovel "1..1" -- "1..n" Publisher : is edited by
+}
+
+@enduml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
