@@ -16,13 +16,13 @@ public class BedethequeAuthorScraper {
 
     /**
      * Scrap all authors starting with a letter <n> from http://wwww.bedetheque.com
-     * @param bedethequeAuthorsUrl
+     * @param bedethequeAuthorUrlListByLetter
      * @return
      * @throws IOException
      */
-    public List<ScrapedAuthorUrl> scrapAuthorUrlsByLetter(String bedethequeAuthorsUrl) throws IOException {
+    public List<ScrapedAuthorUrl> scrapAuthorUrlsByLetter(String bedethequeAuthorUrlListByLetter) throws IOException {
         // Load all authors starting with the letter
-        Document doc = Jsoup.connect(bedethequeAuthorsUrl).maxBodySize(0).userAgent("Mozilla").get();
+        Document doc = Jsoup.connect(bedethequeAuthorUrlListByLetter).maxBodySize(0).userAgent("Mozilla").get();
 
         // Retrieve all authors from the html page
         List<ScrapedAuthorUrl> scrapedAuthorUrls = new ArrayList<>();
@@ -58,8 +58,8 @@ public class BedethequeAuthorScraper {
         scrapedAuthor.setLastname(scrap(doc, "ul.auteur-info li:contains(Nom) > span", null));
         scrapedAuthor.setFirstname(scrap(doc, "ul.auteur-info li:contains(Prénom) > span", null));
         scrapedAuthor.setNickname(scrap(doc, "ul.auteur-info li:contains(Pseudo)", null));
-        scrapedAuthor.setBirthdate(scrap(doc, "ul.auteur-info li:contains(Naissance)", null));
-        scrapedAuthor.setDeceaseDate(scrap(doc, "ul.auteur-info li:contains(Décès)", null));
+        scrapedAuthor.setBirthdate(scrapAndClean(doc, "ul.auteur-info li:contains(Naissance)", null, "le"));
+        scrapedAuthor.setDeceaseDate(scrapAndClean(doc, "ul.auteur-info li:contains(Décès)", null, "le"));
         scrapedAuthor.setNationality(scrap(doc, "ul.auteur-info li:contains(Naissance) > span.pays-auteur", null)
                 .replace('(', ' ')
                 .replace(')', ' ')
@@ -97,5 +97,12 @@ public class BedethequeAuthorScraper {
             }
         }
         return res;
+    }
+
+    private static String scrapAndClean(Document doc, String query, String attribute, String textToRemove){
+        String preprocessedText = scrap(doc, query, attribute);
+
+        return preprocessedText.replaceAll(textToRemove, "").trim();
+
     }
 }

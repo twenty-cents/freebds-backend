@@ -4,11 +4,21 @@ import com.freebds.freebdsbackend.business.scrapers.bedetheque.authors.Bedethequ
 import com.freebds.freebdsbackend.business.scrapers.bedetheque.dto.ScrapedAuthor;
 import com.freebds.freebdsbackend.business.scrapers.bedetheque.dto.ScrapedAuthorUrl;
 import com.freebds.freebdsbackend.model.Author;
+import com.freebds.freebdsbackend.repository.AuthorRepository;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class AuthorServiceImpl implements AuthorService {
+
+    private AuthorRepository authorRepository;
+
+    public AuthorServiceImpl(AuthorRepository authorRepository) {
+        this.authorRepository = authorRepository;
+    }
 
     @Override
     public Author addAuthor() {
@@ -33,6 +43,41 @@ public class AuthorServiceImpl implements AuthorService {
     @Override
     public boolean deleteAuthorById(long id) {
         return false;
+    }
+
+    /**
+     * Import a scraped author into the database
+     *
+     * @param scrapedAuthor : the author to import
+     * @return the author added into the database
+     */
+    @Override
+    public Author importAuthor(ScrapedAuthor scrapedAuthor) {
+        Author author = new Author();
+        author.setExternalId(scrapedAuthor.getId());
+        author.setNickname(scrapedAuthor.getNickname());
+        author.setLastname(scrapedAuthor.getLastname());
+        author.setFirstname(scrapedAuthor.getFirstname());
+        author.setNationality(scrapedAuthor.getNationality());
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");
+        try {
+            author.setBirthdate(LocalDate.parse(scrapedAuthor.getBirthdate(), formatter));
+        } catch (DateTimeParseException e) {
+            author.setBirthdate(null);
+        }
+
+        try {
+            author.setDeceaseDate(LocalDate.parse(scrapedAuthor.getDeceaseDate(), formatter));
+        } catch (DateTimeParseException e) {
+            author.setDeceaseDate(null);
+        }
+
+        author.setBiography(scrapedAuthor.getBiography());
+        author.setSiteUrl(scrapedAuthor.getSiteUrl());
+        author.setScrapUrl(scrapedAuthor.getAuthorUrl());
+
+        return authorRepository.save(author);
     }
 
     @Override

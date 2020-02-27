@@ -18,6 +18,8 @@ public interface AuthorService {
 
     boolean deleteAuthorById(long id);
 
+    Author importAuthor(ScrapedAuthor scrapedAuthor);
+
 
     ScrapedAuthor scrapAuthorById(String externalId);
 

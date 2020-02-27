@@ -5,6 +5,8 @@ import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "author")
@@ -17,8 +19,9 @@ import java.time.LocalDateTime;
 public class Author {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="id_authors")
-    @Column(name="id", updatable = false, nullable = false)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="generator_author_id_seq")
+    @SequenceGenerator (name = "generator_author_id_seq", sequenceName = "author_id_seq", allocationSize = 1)
+    @Column(name="id")
     private Long id;
 
     @Column(name = "external_id", length = 10, nullable = false)
@@ -51,6 +54,9 @@ public class Author {
     @Column(name ="photo_url")
     private String photoUrl;
 
+    @Column(name = "is_scraped")
+    private Boolean isScraped;
+
     @Column(name = "scrap_url")
     private String scrapUrl;
 
@@ -65,5 +71,12 @@ public class Author {
 
     @Column(name = "last_update_user", length = 30)
     private String lastUpdateUser;
+
+    @OneToMany(
+            mappedBy = "author",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<GraphicNovelAuthor> graphicNovels = new ArrayList<>();
 
 }
