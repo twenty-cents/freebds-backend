@@ -1,36 +1,53 @@
 @startuml
 package freebds <<Rectangle>> #LightGray {
-class User {
+class user {
+    - id
     - username
     - password
+    - role_id
     - email
-    - role
-    - createdOn
-    - updatedOn
-    - lastLogin
+    - last_login_date
 }
 
-class Role {
+class role {
     - id
     - name
 }
 
-class Library {
+class library {
     - id
     - name
     - description
 }
 
-class UserLibrary {
-    - idUser
-    - idLibrary
+class users_library {
+    - user_id
+    - library_id
 }
 
-class LibraryContent {
+class library_content {
     - id
-    - isPhysical
-    - isNumeric
-    - localStorage
+    - library_id
+    - graphicnovel_id
+    - is_favorite
+    - is_physical
+    - is_numeric
+    - local_storage
+    - creation_date
+    - creation_user
+    - last_update_date
+    - last_update_user
+}
+
+class library_serie_content {
+    - id
+    - library_id
+    - serie_id
+    - is_favorite
+    - creation_date
+    - creation_user
+    - last_update_date
+    - last_update_user
 }
 
 User -- Role
@@ -49,29 +66,31 @@ end note
 
 class Author {
     - id
-    - externalId
+    - external_id
     - lastname
     - firstname
     - nickname
     - nationality
     - birthdate
-    - deceaseDate
+    - decease_date
+    - photo_url
+    - site_url
+    - is_scraped
+    - scrap_url
     - biography
-    - siteUrl
-    - photoUrl
-    - photoThumbnailUrl
-    - scrapUrl
+    - creation_date
+    - creation_user
+    - last_update_date
+    - last_update_user
 }
 
 class Serie {
     - id
-    - externalId
+    - externai_Id
     - title
-    - category
     - status
     - origin
     - langage
-    - collection
     - synopsys
     - pictureUrl
     - pictureThumbnailUrl
