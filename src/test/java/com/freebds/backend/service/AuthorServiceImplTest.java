@@ -1,22 +1,73 @@
 package com.freebds.backend.service;
 
+import com.freebds.backend.model.Author;
 import com.freebds.backend.repository.AuthorRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-//@RunWith(MockitoJUnitRunner.class)
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
+
+@ExtendWith(MockitoExtension.class)
 class AuthorServiceImplTest {
 
-    //@Mock
-    AuthorRepository authorRepository;
+    private AuthorService authorService;
 
-    //@InjectMocks
-    AuthorServiceImpl authorService;
+    @Mock
+    private AuthorRepository authorRepository;
 
-    // https://www.freecodecamp.org/news/unit-testing-services-endpoints-and-repositories-in-spring-boot-4b7d9dc2b772/
-    //@Test
-    void scrapAuthorByUrl() {
-        String url = "https://www.bedetheque.com/auteur-77-BD-Greg.html";
-        //ScrapAuthorDTO scrapAuthorDTO = authorService.scrapAuthorByUrl(url);
+    @BeforeEach
+    public void setUp() {
+        this.authorService = new AuthorServiceImpl(authorRepository);
+    }
 
-        //assertThat(scrapAuthorDTO.getNickname()).isEqualTo("Greg");
+    @Test
+    void getAuthorById() {
+        // Given
+        Author expectedAuthor = new Author();
+        expectedAuthor.setId(1L);
+        Optional<Author> OpExpectedAuthor = Optional.of(expectedAuthor);
+
+        doReturn(OpExpectedAuthor).when(authorRepository).findById(1L);
+
+        // When
+        Author actualAuthor = authorService.getAuthorById(1L);
+
+        // Then
+        assertThat(actualAuthor.getId()).isEqualTo(expectedAuthor.getId());
+    }
+
+    @Test
+    void getAuthors() {
+        // TODO : how to implement a test with page/pageable?
+    }
+
+    @Test
+    void getAuthorByExternalId() {
+        // Given
+        Author expectedAuthor = new Author();
+        expectedAuthor.setId(1L);
+        expectedAuthor.setExternalId("44560");
+        List<Author> expectedAuthors = Arrays.asList(expectedAuthor);
+
+        doReturn(expectedAuthors).when(authorRepository).findAuthorByExternalId("44560");
+
+        // When
+        Author actualAuthor = authorService.getAuthorByExternalId("44560");
+
+        // Then
+        assertThat(actualAuthor.getExternalId()).isEqualTo(expectedAuthors.get(0).getExternalId());
+    }
+
+    @Test
+    void getFilteredAuthors() {
+        // TODO : how to implement a test with page/pageable?
     }
 }
