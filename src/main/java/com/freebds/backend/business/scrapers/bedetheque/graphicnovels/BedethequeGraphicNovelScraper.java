@@ -1,8 +1,8 @@
 package com.freebds.backend.business.scrapers.bedetheque.graphicnovels;
 
+import com.freebds.backend.business.scrapers.GenericScraper;
 import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedAuthorRole;
 import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedGraphicNovel;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BedethequeGraphicNovelScraper {
+public class BedethequeGraphicNovelScraper extends GenericScraper {
 
     public BedethequeGraphicNovelScraper() {
     }
@@ -27,7 +27,7 @@ public class BedethequeGraphicNovelScraper {
      */
     public List<ScrapedGraphicNovel> retrieveAlbums(String serieUrl) throws IOException {
         // Load all authors starting with the letter
-        Document doc = Jsoup.connect(serieUrl).maxBodySize(0).userAgent("Mozilla").get();
+        Document doc = this.load(serieUrl);
 
         List<ScrapedGraphicNovel> scrapedGraphicNovels = new ArrayList<ScrapedGraphicNovel>();
 

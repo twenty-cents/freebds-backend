@@ -1,6 +1,7 @@
 package com.freebds.backend.service;
 
 import com.freebds.backend.business.scrapers.GenericAuthorUrl;
+import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.model.Author;
 import com.freebds.backend.model.GraphicNovel;
 import org.springframework.data.domain.Page;
@@ -18,7 +19,7 @@ public interface AuthorService {
 
     Page<GraphicNovel> getGraphicNovelsByAuthorId(Pageable page, Long authorId);
 
-    Author getAuthorByExternalId(String externalId);
+    Author getAuthorByExternalId(String externalId) throws EntityNotFoundException;
 
     Page<Author> getFilteredAuthors(Pageable pageable, String lastname, String firstname, String nickname, String nationality);
 

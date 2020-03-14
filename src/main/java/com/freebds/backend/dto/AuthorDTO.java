@@ -1,10 +1,14 @@
 package com.freebds.backend.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import io.swagger.annotations.ApiModel;
+import lombok.*;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Getter
 @Setter
+@ApiModel(value = "Author", description = "An author description scraped from http://www.bedetheque.com")
 public class AuthorDTO {
 
     private Long id;

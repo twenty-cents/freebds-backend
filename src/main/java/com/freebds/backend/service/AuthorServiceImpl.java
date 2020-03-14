@@ -83,7 +83,7 @@ public class AuthorServiceImpl implements AuthorService {
      */
     @Override
     public Author getAuthorByExternalId(String externalId) throws EntityNotFoundException {
-        List<Author> authors = authorRepository.findAuthorByExternalId(externalId);
+        List<Author> authors = authorRepository.findAuthorsByExternalId(externalId);
 
         if(authors.size() == 0){
             throw new EntityNotFoundException(externalId, "Author");
@@ -102,6 +102,7 @@ public class AuthorServiceImpl implements AuthorService {
      * @param nationality the author nationality to get
      * @return a page of filtered authors
      */
+    @Override
     public Page<Author> getFilteredAuthors(Pageable pageable, String lastname, String firstname, String nickname, String nationality) {
         return authorRepository.findAuthorsByLastnameIgnoreCaseContainingAndFirstnameIgnoreCaseContainingAndNicknameIgnoreCaseContainingAndNationalityIgnoreCaseContaining(pageable, lastname, firstname, nickname, nationality);
     }
@@ -122,8 +123,7 @@ public class AuthorServiceImpl implements AuthorService {
         // Save author
         Author author = bedethequeAuthorScraper.toAuthor(genericScrapAuthor);
         author = authorRepository.saveAndFlush(author);
-        // TODO : log à supprimer
-        System.out.println("Scrap = " + genericScrapAuthor.toString());
+
         return author;
     }
 

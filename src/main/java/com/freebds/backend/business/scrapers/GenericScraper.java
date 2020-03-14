@@ -11,6 +11,17 @@ public class GenericScraper {
     }
 
     public Document load(String url) throws IOException {
-        return Jsoup.connect(url).maxBodySize(0).userAgent("Mozilla").get();
+        // First try
+        try {
+            return Jsoup.connect(url).maxBodySize(0).userAgent("Mozilla").get();
+        } catch (IOException e) {
+            // Second try, after 10 sec
+            // And throw IOException if http access error
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException ex) {
+            }
+            return Jsoup.connect(url).maxBodySize(0).userAgent("Mozilla").get();
+        }
     }
 }

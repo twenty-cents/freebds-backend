@@ -79,7 +79,7 @@ class AuthorRepositoryTest {
     @Test
     @Order(31)
     void findAuthorByExternalId(){
-        List<Author> authors = authorRepository.findAuthorByExternalId("33648");
+        List<Author> authors = authorRepository.findAuthorsByExternalId("33648");
         assertThat(authors.size()).isEqualTo(1);
     }
 

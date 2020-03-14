@@ -1,3 +1,7 @@
+drop index if exists external_id_index;
+drop index if exists author_external_id_index;
+drop index if exists serie_external_id_index;
+
 -- **************************************************************** --
 -- Delete constraints
 -- **************************************************************** --
@@ -120,7 +124,7 @@ CREATE TABLE graphicnovel
     release_date        DATE,
     isbn                VARCHAR(20),
     total_pages         INT,
-    format              VARCHAR(20),
+    book_format         VARCHAR(20),
     is_original_edition BOOLEAN,
     is_integrale        BOOLEAN,
     is_broche           BOOLEAN,
@@ -331,3 +335,8 @@ alter sequence serie_id_seq owned by serie.id;
 
 alter table users alter column id set default nextval('public.users_id_seq');
 alter sequence users_id_seq owned by users.id;
+
+-- Create index
+create index external_id_index on graphicnovel (external_id);
+create index author_external_id_index on author(external_id);
+create index serie_external_id_index on serie(external_id);

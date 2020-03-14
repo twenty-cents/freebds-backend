@@ -13,11 +13,11 @@ import java.util.List;
 public interface GraphicNovelAuthorRepository  extends JpaRepository<GraphicNovelAuthor, GraphicNovelAuthorId> {
 
     /**
-     * Check if a role allready exists on a tuple graphic novel / author
+     * Check if a role already exists on a tuple graphic novel / author
      * @param graphicNovelId the graphic novel
      * @param authorId the author id
      * @param role the role to check
-     * @return the row if this association allready exists
+     * @return the row if this association already exists
      */
     @Query("SELECT g FROM GraphicNovelAuthor g " +
             "WHERE g.graphicNovel.id = :graphicnovel_id " +

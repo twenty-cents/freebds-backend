@@ -19,8 +19,27 @@ public class BedethequeSerieScraper extends GenericScraper {
     private final String BEDETHEQUE_SERIE_LIST_BY_LETTER_URL = "https://www.bedetheque.com/bandes_dessinees_%s.html";
     private final String BEDETHEQUE_SERIE_PREFIX_URL = "https://www.bedetheque.com/serie-";
     private final String BEDETHEQUE_MULTI_SEARCH_URL = "https://www.bedetheque.com/search/tout?RechTexte=%s&RechWhere=7";
+    private static final int delayBetweenTwoScraps = 1000;
 
     public BedethequeSerieScraper() {
+    }
+
+    /**
+     * List all existing series from http://www.bedetheque.com
+     *
+     * @return the url list of all found series
+     * @throws IOException in case of connection error to the site http://www.bedetheque.com
+     */
+    public List<ScrapedSerieUrl> listAll() throws IOException {
+        // Get all existing authors urls from http://www.bedetheque.com
+        List<ScrapedSerieUrl> scrapedSerieUrls = new ArrayList<>();
+        String[] letters = new String("0-A-B-C-D-E-F-G-H-I-J-K-L-M-N-O-P-Q-R-S-T-U-V-W-X-Y-Z").split("-");
+        for(String letter : letters){
+            List<ScrapedSerieUrl> sc = this.listByLetter(letter);
+            scrapedSerieUrls.addAll(sc);
+        }
+
+        return scrapedSerieUrls;
     }
 
     /**
@@ -44,7 +63,9 @@ public class BedethequeSerieScraper extends GenericScraper {
                 } else
                 //if(link.text().matches("(\\(AUT\\))|(\\(Catalogues\\))|(\\(DOC\\))") == false)
                     {
-                    series.add(new ScrapedSerieUrl(series.size(), link.text(), linkHref));
+                        // Update serie url to return the whole graphic novels
+                        linkHref = linkHref.replaceAll(".html", "__10000.html");
+                        series.add(new ScrapedSerieUrl(series.size(), link.text(), linkHref));
                     //System.out.println(series.size() + " - " + link.text() + " - " + linkHref);
                 }
             }
@@ -90,7 +111,7 @@ public class BedethequeSerieScraper extends GenericScraper {
     public ScrapedSerie scrap(String url) throws IOException {
         Document doc = this.load(url);
 
-        System.out.println("Série à scraper=" + url);
+        System.out.print("Série à scraper=" + url);
 
         ScrapedSerie scrapedSerie = new ScrapedSerie();
 
@@ -111,6 +132,13 @@ public class BedethequeSerieScraper extends GenericScraper {
         scrapedSerie.setCreationUser("SCRAPER_BEDETHEQUE_V1");
         scrapedSerie.setLastUpdateDate(LocalDateTime.now());
         scrapedSerie.setLastUpdateUser("SCRAPER_BEDETHEQUE_V1");
+
+        // TODO : délai d'attente entre deux requêtes http à déclarer en @Value
+        try {
+            Thread.sleep(delayBetweenTwoScraps);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         return scrapedSerie;
     }

@@ -2,6 +2,7 @@ package com.freebds.backend.business.scrapers.bedetheque.authors;
 
 import com.freebds.backend.business.scrapers.GenericAuthorUrl;
 import com.freebds.backend.business.scrapers.GenericScrapAuthor;
+import com.freebds.backend.business.scrapers.GenericScraper;
 import com.freebds.backend.model.Author;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -17,11 +18,12 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BedethequeAuthorScraper {
+public class BedethequeAuthorScraper extends GenericScraper {
 
     private static final String BEDETHEQUE_AUTHORS_LIST_BY_LETTER = "https://www.bedetheque.com/liste_auteurs_BD_0.html";
     private static final String BEDETHEQUE_AUTHOR_PREFIX_URL = "https://www.bedetheque.com/auteur-";
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private static final int delayBetweenTwoScraps = 1000;
 
     /**
      * Scrap all authors starting with a letter <n> from http://wwww.bedetheque.com
@@ -65,7 +67,7 @@ public class BedethequeAuthorScraper {
      */
     public GenericScrapAuthor scrapAuthor(GenericAuthorUrl authorUrl) throws IOException {
         // Load author
-        Document doc = Jsoup.connect(authorUrl.getUrl()).maxBodySize(0).userAgent("Mozilla").get();
+        Document doc = this.load(authorUrl.getUrl());
 
         GenericScrapAuthor genericScrapAuthor = new GenericScrapAuthor();
         // Scrap author informations
@@ -109,6 +111,13 @@ public class BedethequeAuthorScraper {
         genericScrapAuthor.setCreationUser("SCRAPER_BEDETHEQUE_V1");
         genericScrapAuthor.setLastUpdateDate(LocalDateTime.now());
         genericScrapAuthor.setLastUpdateUser("SCRAPER_BEDETHEQUE_V1");
+
+        // TODO : délai d'attente entre deux requêtes http à déclarer en @Value
+        try {
+            Thread.sleep(delayBetweenTwoScraps);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         return genericScrapAuthor;
     }

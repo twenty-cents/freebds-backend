@@ -33,7 +33,7 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
      * @return an author
      * @throws EntityNotFoundException in case external id is not found in DB.
      */
-    List<Author> findAuthorByExternalId(String externalId);
+    List<Author> findAuthorsByExternalId(String externalId);
 
     /**
      * Get all graphic novels from an author
