@@ -23,7 +23,6 @@ public class BedethequeAuthorScraper extends GenericScraper {
     private static final String BEDETHEQUE_AUTHORS_LIST_BY_LETTER = "https://www.bedetheque.com/liste_auteurs_BD_0.html";
     private static final String BEDETHEQUE_AUTHOR_PREFIX_URL = "https://www.bedetheque.com/auteur-";
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-    private static final int delayBetweenTwoScraps = 1000;
 
     /**
      * Scrap all authors starting with a letter <n> from http://wwww.bedetheque.com
@@ -111,13 +110,6 @@ public class BedethequeAuthorScraper extends GenericScraper {
         genericScrapAuthor.setCreationUser("SCRAPER_BEDETHEQUE_V1");
         genericScrapAuthor.setLastUpdateDate(LocalDateTime.now());
         genericScrapAuthor.setLastUpdateUser("SCRAPER_BEDETHEQUE_V1");
-
-        // TODO : délai d'attente entre deux requêtes http à déclarer en @Value
-        try {
-            Thread.sleep(delayBetweenTwoScraps);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         return genericScrapAuthor;
     }

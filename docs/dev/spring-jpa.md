@@ -25,3 +25,7 @@
 
 ### API REST
 - Naming conventions : https://restfulapi.net/resource-naming/
+
+### Data REST
+- Paging and Sorting : https://docs.spring.io/spring-data/rest/docs/current/reference/html/#paging-and-sorting
+- Projections : https://www.baeldung.com/spring-data-jpa-projections

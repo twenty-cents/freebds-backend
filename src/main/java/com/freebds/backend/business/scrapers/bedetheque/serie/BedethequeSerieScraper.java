@@ -16,10 +16,9 @@ import java.util.List;
 
 public class BedethequeSerieScraper extends GenericScraper {
 
-    private final String BEDETHEQUE_SERIE_LIST_BY_LETTER_URL = "https://www.bedetheque.com/bandes_dessinees_%s.html";
-    private final String BEDETHEQUE_SERIE_PREFIX_URL = "https://www.bedetheque.com/serie-";
-    private final String BEDETHEQUE_MULTI_SEARCH_URL = "https://www.bedetheque.com/search/tout?RechTexte=%s&RechWhere=7";
-    private static final int delayBetweenTwoScraps = 1000;
+    private String BEDETHEQUE_SERIE_LIST_BY_LETTER_URL = "https://www.bedetheque.com/bandes_dessinees_%s.html";
+    private String BEDETHEQUE_SERIE_PREFIX_URL = "https://www.bedetheque.com/serie-";
+    private String BEDETHEQUE_MULTI_SEARCH_URL = "https://www.bedetheque.com/search/tout?RechTexte=%s&RechWhere=7";
 
     public BedethequeSerieScraper() {
     }
@@ -33,7 +32,7 @@ public class BedethequeSerieScraper extends GenericScraper {
     public List<ScrapedSerieUrl> listAll() throws IOException {
         // Get all existing authors urls from http://www.bedetheque.com
         List<ScrapedSerieUrl> scrapedSerieUrls = new ArrayList<>();
-        String[] letters = new String("0-A-B-C-D-E-F-G-H-I-J-K-L-M-N-O-P-Q-R-S-T-U-V-W-X-Y-Z").split("-");
+        String[] letters = "0-A-B-C-D-E-F-G-H-I-J-K-L-M-N-O-P-Q-R-S-T-U-V-W-X-Y-Z".split("-");
         for(String letter : letters){
             List<ScrapedSerieUrl> sc = this.listByLetter(letter);
             scrapedSerieUrls.addAll(sc);
@@ -44,11 +43,12 @@ public class BedethequeSerieScraper extends GenericScraper {
 
     /**
      * List all series starting with the letter
-     * @param letter
-     * @return Serie collection
+     *
+     * @param letter the series starting letter to get
+     * @return the series collection
      */
     public List<ScrapedSerieUrl> listByLetter(String letter) throws IOException {
-        List<ScrapedSerieUrl> series = new ArrayList<ScrapedSerieUrl>();
+        List<ScrapedSerieUrl> series = new ArrayList<>();
 
         // Load all series starting with the letter
         Document doc = this.load(String.format(BEDETHEQUE_SERIE_LIST_BY_LETTER_URL, letter));
@@ -61,12 +61,10 @@ public class BedethequeSerieScraper extends GenericScraper {
                 if(link.text().startsWith("(AUT") || link.text().startsWith("(DOC)") || link.text().startsWith("(Catalogues)")) {
 
                 } else
-                //if(link.text().matches("(\\(AUT\\))|(\\(Catalogues\\))|(\\(DOC\\))") == false)
                     {
                         // Update serie url to return the whole graphic novels
                         linkHref = linkHref.replaceAll(".html", "__10000.html");
                         series.add(new ScrapedSerieUrl(series.size(), link.text(), linkHref));
-                    //System.out.println(series.size() + " - " + link.text() + " - " + linkHref);
                 }
             }
         }
@@ -75,38 +73,11 @@ public class BedethequeSerieScraper extends GenericScraper {
     }
 
     /**
-     *
-     * @param title
-     * @return
-     * @throws IOException
-     */
-    public List<ScrapedSerieUrl> listByTitle(String title) throws IOException{
-        List<ScrapedSerieUrl> series = new ArrayList<ScrapedSerieUrl>();
-        title = title.toLowerCase();
-
-        // Load all series starting with the letter
-        Document doc = this.load(String.format(BEDETHEQUE_MULTI_SEARCH_URL, title));
-
-        // Retrieve all series from the html page
-        //Elements div = doc.select("div.line-title, search-line":contains(série))
-        Elements links = doc.getElementsByTag("a");
-        for (Element link : links) {
-            String linkHref = link.attr("href");
-            System.out.println(series.size() + " - " + link.text() + " - " + linkHref);
-            if (linkHref.contains(BEDETHEQUE_SERIE_PREFIX_URL) && link.text().toLowerCase().contains(title) ) {
-                series.add(new ScrapedSerieUrl(series.size(), link.text(), linkHref));
-                //System.out.println(series.size() + " - " + link.text() + " - " + linkHref);
-            }
-        }
-
-        return series;
-    }
-
-    /**
      * Scrap a serie
-     * @param url
-     * @return
-     * @throws IOException
+     *
+     * @param url the url of the serie to scrap
+     * @return the scraped serie
+     * @throws IOException in case of http access error
      */
     public ScrapedSerie scrap(String url) throws IOException {
         Document doc = this.load(url);
@@ -133,18 +104,17 @@ public class BedethequeSerieScraper extends GenericScraper {
         scrapedSerie.setLastUpdateDate(LocalDateTime.now());
         scrapedSerie.setLastUpdateUser("SCRAPER_BEDETHEQUE_V1");
 
-        // TODO : délai d'attente entre deux requêtes http à déclarer en @Value
-        try {
-            Thread.sleep(delayBetweenTwoScraps);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         return scrapedSerie;
     }
 
+    /**
+     * Scrap all graphic novels of the current serie
+     *
+     * @param doc the html fragment of the graphic novel to scrap
+     * @return the scraped graphic novel
+     */
     private List<ScrapedGraphicNovel> retrieveGraphicNovels(Document doc) {
-        List<ScrapedGraphicNovel> scrapedGraphicNovels = new ArrayList<ScrapedGraphicNovel>();
+        List<ScrapedGraphicNovel> scrapedGraphicNovels = new ArrayList<>();
         BedethequeGraphicNovelScraper bedethequeGraphicNovelScraper = new BedethequeGraphicNovelScraper();
 
         Elements eAlbums = doc.select("ul.liste-albums li[itemtype='https://schema.org/Book']");
@@ -156,91 +126,145 @@ public class BedethequeSerieScraper extends GenericScraper {
         return scrapedGraphicNovels;
     }
 
+    /**
+     * Retrieve the external id of the current serie
+     *
+     * @param doc the fragment html of the current serie
+     * @return the scraped external id
+     */
     private String retrieveExternalId(Document doc) {
         String res = null;
         try {
             res = doc.select("ul.serie-info li:contains(Identifiant)").first().ownText();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return res;
     }
 
+    /**
+     * Retrieve the title of the current serie
+     *
+     * @param doc the fragment html of the current serie
+     * @return the scraped title
+     */
     private String retrieveTitle(Document doc) {
         String res = null;
         try {
             res = doc.getElementsByTag("h1").first().text();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return res;
     }
 
+    /**
+     * Retrieve the category of the current serie
+     *
+     * @param doc the fragment html of the current serie
+     * @return the scraped category
+     */
     private String retrieveCategory(Document doc) {
         String res = null;
         try {
             res = doc.select("ul.serie-info li:contains(Genre) > span").first().ownText();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return res;
     }
 
+    /**
+     * Retrieve the status of the current serie
+     *
+     * @param doc the fragment html of the current serie
+     * @return the scraped status
+     */
     private String retrieveStatus(Document doc) {
         String res = null;
         try {
             res = doc.select("ul.serie-info li:contains(Parution) > span").first().ownText();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return res;
     }
 
+    /**
+     * Retrieve the origin of the current serie
+     *
+     * @param doc the fragment html of the current serie
+     * @return the scraped origin
+     */
     private String retrieveOrigin(Document doc) {
         String res = null;
         try {
             res = doc.select("ul.serie-info li:contains(Origine)").first().ownText();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return res;
     }
 
+    /**
+     * Retrieve the language of the current serie
+     *
+     * @param doc the fragment html of the current serie
+     * @return the scraped language
+     */
     private String retrieveLangage(Document doc) {
         String res = null;
         try {
             res = doc.select("ul.serie-info li:contains(Langue)").first().ownText();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return res;
     }
 
+    /**
+     * Retrieve the synopsys of the current serie
+     *
+     * @param doc the fragment html of the current serie
+     * @return the scraped synopsys
+     */
     private String retrieveSynopsys(Document doc) {
         String res = null;
         try {
             res = doc.select("div.single-content.serie > p").first().ownText();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return res;
     }
 
+    /**
+     * Retrieve the page url of the current serie
+     *
+     * @param doc the fragment html of the current serie
+     * @return the scraped page url
+     */
     private String retrievePictureUrl(Document doc) {
         String res = null;
         try {
             res = doc.select("div.serie-image > a").first().attr("href");
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return res;
     }
 
+    /**
+     * Retrieve the page thumbnail url of the current serie
+     *
+     * @param doc the fragment html of the current serie
+     * @return the scraped page thumbnail urk
+     */
     private String retrieveThumbnailUrl(Document doc) {
         String res = null;
         try {
             res = doc.select("div.serie-image > a > img").first().attr("src");
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return res;

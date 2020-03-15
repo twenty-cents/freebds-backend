@@ -2,6 +2,9 @@ package com.freebds.backend.repository;
 
 import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.model.GraphicNovel;
+import com.freebds.backend.model.Serie;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,6 +44,13 @@ public interface GraphicNovelRepository extends JpaRepository<GraphicNovel, Long
     GraphicNovel saveAndFlush(GraphicNovel graphicNovel);
 
     @Query("SELECT g FROM GraphicNovel g WHERE g.serie.id = :id ORDER BY g.tome")
-    List<GraphicNovel> findGraphicNovelsBySerieIdOrdeOrderByTome(@Param("id") Long serieId);
+    List<GraphicNovel> findGraphicNovelsBySerieIdOrderByTome(@Param("id") Long serieId);
 
+    /**
+     * Retrieve all graphic novels from a serie
+     * @param pageable
+     * @param serie
+     * @return
+     */
+    Page<GraphicNovel> findGraphicNovelsBySerieEquals(Pageable pageable, Serie serie);
 }

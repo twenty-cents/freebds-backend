@@ -15,12 +15,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
-public class SerieServiceImpl {
+public class SerieServiceImpl implements SerieService{
 
     private SerieRepository serieRepository;
     private GraphicNovelService graphicNovelService;
@@ -37,59 +37,85 @@ public class SerieServiceImpl {
         this.authorService = authorService;
     }
 
+    /**
+     * Retrieve all existing series <code>origin types</code> defined by http://wwww.bedetehque.com
+     *
+     * @return the list of distinct series origin types, ordered by asc
+     */
+    @Override
     public List<String> getDistinctOrigins() {
         return this.serieRepository.findDistinctOrigins();
     }
 
+    /**
+     * Retrieve all existing series <code>status types</code> defined by http://wwww.bedetehque.com
+     *
+     * @return the list of distinct series status types, ordered by asc
+     */
+    @Override
     public List<String> getDistinctStatus() {
         return this.serieRepository.findDistinctStatus();
     }
 
+    /**
+     * Retrieve all existing series <code>category types</code> defined by http://wwww.bedetehque.com
+     *
+     * @return the list of distinct series category types, ordered by asc
+     */
+    @Override
     public List<String> getDistinctCategories() {
         return this.serieRepository.findDistinctCategories();
     }
 
+    /**
+     * Retrieve all series, filtered by title, origin, status and category
+     *
+     * @param pageable the page to get
+     * @param title the title to get
+     * @param origin the origin to get
+     * @param status the status to get
+     * @param category the category to get
+     * @return a page of filtered series
+     */
+    @Override
     public Page<Serie> getFilteredSeries(Pageable pageable, String title, String origin, String status, String category) {
         return this.serieRepository.findSeriesByTitleIgnoreCaseContainingAndOriginIgnoreCaseContainingAndStatusIgnoreCaseContainingAndCategoriesIgnoreCaseContaining(
                 pageable, title, origin, status, category
         );
     }
 
-    //@PostConstruct
-//    public void testdb(){
-//        GraphicNovel gc = graphicNovelRepository.findById(169L).get();
-//
-//        System.out.println(gc.getTitle());
-//        System.out.println("size=" + gc.getGraphicNovelAuthors().size());
-//        for(GraphicNovelAuthor graphicNovelAuthor : gc.getGraphicNovelAuthors()){
-//            System.out.println(graphicNovelAuthor.getRole() + " = " + graphicNovelAuthor.getAuthor().toString());
-//        }
-//        //System.out.println(gc.getGraphicNovelAuthors().toString());
-//
-//        Author author = authorRepository.findById(33648L).get();
-//        System.out.println(author.getLastname());
-//        System.out.println(author.getGraphicNovelAuthors().size());
-//        for(GraphicNovelAuthor graphicNovelAuthor : author.getGraphicNovelAuthors()){
-//            System.out.println(graphicNovelAuthor.getRole() + " = " + graphicNovelAuthor.getGraphicNovel().getTome() + ". " + graphicNovelAuthor.getGraphicNovel().getTitle());
-//        }
-//
-//    }
+    /**
+     * Retrieve a serie by id
+     *
+     * @param serieId the id of the serie to get
+     * @return the found serie
+     * @throws EntityNotFoundException in case ID is not found in DB.
+     */
+    @Override
+    public Serie getSerieById(Long serieId) throws EntityNotFoundException {
+        Optional<Serie> optionalSerie = serieRepository.findById(serieId);
+
+        if(optionalSerie.isPresent()){
+            return optionalSerie.get();
+        } else{
+            throw new EntityNotFoundException(serieId, "Serie");
+        }
+    }
 
     /**
      * Scrap a serie from https://www.bedetheque.com
-     * @param serieUrl
-     * @return
-     * @throws IOException
+     *
+     * @param serieUrl the serie url to scrap
+     * @return the scraped serie
+     * @throws IOException in case of http access error
      */
     //@PostConstruct
+    @Override
     public Serie scrapSerie(String serieUrl) throws IOException {
-        //String serieUrl = "https://www.bedetheque.com/serie-59-BD-Asterix__10000.html";
         // Instantiate serie Scraper
         BedethequeSerieScraper bedethequeSerieScraper = new BedethequeSerieScraper();
         // Load serie
         ScrapedSerie scrapSerie = bedethequeSerieScraper.scrap(serieUrl);
-
-        //System.out.println("Scrap = " + scrapSerie.toString());
 
         // Get Serie
         Serie serie = serieRepository.findFirstByExternalId(scrapSerie.getExternalId());
@@ -122,7 +148,7 @@ public class SerieServiceImpl {
                 gc = graphicNovelService.getGraphicNovelByExternalId(sgc.getExternalId());
             } catch (EntityNotFoundException e) {
                 gc = graphicNovelService.scrap(serie, sgc);
-            };
+            }
 
             // Authors
             for(ScrapedAuthorRole authorRole : sgc.getAuthors()) {
@@ -141,21 +167,18 @@ public class SerieServiceImpl {
                 // Save author role
                 graphicNovelAuthorService.associate(gc, author, authorRole.getRole());
             }
-
-
         }
-
         return serie;
     }
 
     /**
      * Scrap all new series from https://wwww.bedetheque.com
      * and add them into db
-     * @throws IOException
-     * @throws InterruptedException
+     *
+     * @throws IOException in case of http access error
      */
-    @PostConstruct
-    public void scrapNewSeriesInDb() throws IOException, InterruptedException {
+    @Override
+    public void scrapNewSeriesInDb() throws IOException {
         // Instantiate serie Scraper
         BedethequeSerieScraper bedethequeSerieScraper = new BedethequeSerieScraper();
 
@@ -177,8 +200,8 @@ public class SerieServiceImpl {
                 // Save serie
                 serie = serieRepository.saveAndFlush(serie);
                 System.out.println(" ==> Série ajoutée=" + serie.getTitle() + " (" + graphicNovels.size() + " tomes)");
-                Thread.sleep(1000);
             } else {
+                // TODO : Il faudra gérer la màj des séries/albums/auteurs
                 //System.out.println("Author " + authorUrlDTO.getName() + " already exists in db");
             }
         }

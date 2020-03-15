@@ -5,11 +5,14 @@ import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.model.GraphicNovel;
 import com.freebds.backend.model.Serie;
 import com.freebds.backend.repository.GraphicNovelRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GraphicNovelServiceImpl implements GraphicNovelService {
@@ -18,6 +21,24 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
 
     public GraphicNovelServiceImpl(GraphicNovelRepository graphicNovelRepository) {
         this.graphicNovelRepository = graphicNovelRepository;
+    }
+
+    /**
+     * Retrieve a graphic novel by id
+     *
+     * @param id the id of the graphic novel to get
+     * @return the graphic novel
+     * @throws EntityNotFoundException in case ID is not found in DB.
+     */
+    @Override
+    public GraphicNovel getGraphicNovelById(Long id) throws EntityNotFoundException {
+        Optional<GraphicNovel> optionalGraphicNovel = graphicNovelRepository.findById(id);
+
+        if(optionalGraphicNovel.isPresent()){
+            return optionalGraphicNovel.get();
+        } else{
+            throw new EntityNotFoundException(id, "Graphic Novel");
+        }
     }
 
     /**
@@ -40,7 +61,18 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
 
     @Override
     public List<GraphicNovel> getGraphicNovels(Long serieId) {
-        return this.graphicNovelRepository.findGraphicNovelsBySerieIdOrdeOrderByTome(serieId);
+        return this.graphicNovelRepository.findGraphicNovelsBySerieIdOrderByTome(serieId);
+    }
+
+    /**
+     * Retrieve all graphic novels on a serie
+     *
+     * @param serie the serie to get
+     * @return the graphic novels collection
+     */
+    @Override
+    public Page<GraphicNovel> getGraphicNovels(Pageable pageable, Serie serie) {
+        return graphicNovelRepository.findGraphicNovelsBySerieEquals(pageable, serie);
     }
 
     /**

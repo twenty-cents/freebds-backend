@@ -1,6 +1,7 @@
 package com.freebds.backend.controller;
 
 import com.freebds.backend.dto.SerieDTO;
+import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.mapper.SerieMapper;
 import com.freebds.backend.model.Serie;
 import com.freebds.backend.service.SerieServiceImpl;
@@ -12,10 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -83,7 +81,19 @@ public class SerieController {
         // Convert authors in serieDTO and return the result to the front
         // google : spring how to convert pageable to dto
         // https://www.programcreek.com/java-api-examples/?class=org.springframework.data.domain.Page&method=map
-        return series.map(serie -> SerieMapper.INSTANCE.toDto(serie));
+        return series.map(serie -> SerieMapper.INSTANCE.toDTO(serie));
+    }
+
+    /**
+     * Get a serie by Id
+     *
+     * @param id the serie id to get
+     * @return a serie
+     * @see com.freebds.backend.exception.freebdsApiExceptionHandler#handleEntityNotFoundException(EntityNotFoundException ex) for Exception handling
+     */
+    @GetMapping("/{id}")
+    public SerieDTO getSerieById(@PathVariable Long id){
+        return SerieMapper.INSTANCE.toDTO(serieService.getSerieById(id));
     }
 
 }

@@ -19,7 +19,7 @@ public interface SerieMapper extends EntityDTOMapper<Serie, SerieDTO> {
             @Mapping(target="pageThumbnailUrl", source = "serie.pageThumbnailUrl", defaultValue = ""),
             @Mapping(target="pageUrl", source = "serie.pageUrl", defaultValue = "")
     })
-    SerieDTO toDto(Serie serie);
+    SerieDTO toDTO(Serie serie);
 
     Serie toEntity(SerieDTO serieDTO);
 

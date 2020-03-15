@@ -104,5 +104,4 @@ public class AuthorController {
         return authors.map(author -> AuthorMapper.INSTANCE.authorToAuthorDTO(author));
     }
 
-
 }
