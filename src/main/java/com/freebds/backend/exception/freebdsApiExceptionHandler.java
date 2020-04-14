@@ -48,4 +48,20 @@ public class freebdsApiExceptionHandler extends ResponseEntityExceptionHandler {
                 "The provided body request is not valid, some fields might be missing or not with a good format");
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
+
+    /**
+     * How to proceed in case of an CollectionItemNotFoundException
+     *
+     * @param ex the CollectionItemNotFoundException
+     * @return an API Error wrapped in a ResponseEntity with status 404.
+     */
+    @ExceptionHandler(CollectionItemNotFoundException.class)
+    public ResponseEntity<Object> handleCollectionItemNotFoundException(CollectionItemNotFoundException ex) {
+        ApiErrorDTO apiError = new ApiErrorDTO(
+                "003",
+                "Get request with item " + ex.getItem() + " returned no element in the associated collection " + ex.getCollection(),
+                ex.getMessage());
+        return new ResponseEntity<>(apiError, HttpStatus.NOT_FOUND);
+    }
+
 }

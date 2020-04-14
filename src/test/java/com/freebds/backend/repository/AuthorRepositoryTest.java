@@ -1,25 +1,30 @@
 package com.freebds.backend.repository;
 
 import com.freebds.backend.model.Author;
-import org.junit.jupiter.api.MethodOrderer;
+import com.freebds.backend.model.Serie;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.sql.DataSource;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
 @DataJpaTest
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@ExtendWith(SpringExtension.class)
+@AutoConfigureTestDatabase(replace= AutoConfigureTestDatabase.Replace.NONE)
 class AuthorRepositoryTest {
 
     @Autowired
@@ -82,5 +87,29 @@ class AuthorRepositoryTest {
         List<Author> authors = authorRepository.findAuthorsByExternalId("33648");
         assertThat(authors.size()).isEqualTo(1);
     }
+
+
+    @Test
+    @Order(40)
+    void findBySearchFilters() throws ParseException {
+        Page expectedPage = new PageImpl(new ArrayList<Serie>());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        java.util.Date parsed = format.parse("0001-01-01");
+        java.sql.Date publicationDateFrom = new java.sql.Date(parsed.getTime());
+        parsed = format.parse("9999-01-01");
+        java.sql.Date publicationDateTo = new java.sql.Date(parsed.getTime());
+
+        Page<Author> authors = authorRepository.findBySearchFilters(
+                expectedPage.getPageable(), null, null, null, null, null, null,
+                null, null, null, null, null, publicationDateFrom, publicationDateTo,
+                null, null, null, null);
+        System.out.println(authors.getContent().size());
+        //for(Author author : authors.getContent())
+            //System.out.println(author.getId() + ", " + author.getLastname() + " " + author.getFirstname() + ", " + author.getExternalId());
+
+        assertThat(authors.getContent().size()).isEqualTo(2);
+    }
+
+
 
 }

@@ -127,8 +127,9 @@ public class BedethequeAuthorScraper extends GenericScraper {
         author.setFirstname(genericScrapAuthor.getFirstname());
         author.setNickname(genericScrapAuthor.getNickname());
         author.setNationality(genericScrapAuthor.getNationality());
-        author.setBirthdate(genericScrapAuthor.getBirthdate());
-        author.setDeceaseDate(genericScrapAuthor.getDeceaseDate());
+        // TODO : Date
+        //author.setBirthdate(genericScrapAuthor.getBirthdate());
+        //author.setDeceaseDate(genericScrapAuthor.getDeceaseDate());
         author.setBiography(genericScrapAuthor.getBiography());
         author.setSiteUrl(genericScrapAuthor.getSiteUrl());
         author.setPhotoUrl(genericScrapAuthor.getPic_url());

@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = DateMapper.class)
 public interface SerieMapper extends EntityDTOMapper<Serie, SerieDTO> {
 
     SerieMapper INSTANCE = Mappers.getMapper(SerieMapper.class);

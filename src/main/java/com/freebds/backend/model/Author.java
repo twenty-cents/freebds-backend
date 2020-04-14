@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,9 +13,10 @@ import java.util.Set;
 @Table(name = "author")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Getter
 @Setter
-@EqualsAndHashCode(of= {"id"})
+@EqualsAndHashCode
 @ToString(exclude = "graphicNovelAuthors")
 public class Author {
 
@@ -41,12 +42,12 @@ public class Author {
     private String nationality;
 
     @Column(name = "birthdate")
-    private LocalDate birthdate;
+    private Date birthdate;
 
     @Column(name = "decease_date")
-    private LocalDate deceaseDate;
+    private Date deceaseDate;
 
-    @Column(name = "biography")
+    @Column(name = "biography", columnDefinition = "TEXT")
     private String biography;
 
     @Column(name = "site_url")

@@ -6,7 +6,7 @@ import com.freebds.backend.model.GraphicNovel;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = DateMapper.class)
 public interface GraphicNovelMapper extends EntityDTOMapper<GraphicNovel, GraphicNovelDTO> {
 
     GraphicNovelMapper INSTANCE = Mappers.getMapper(GraphicNovelMapper.class);

@@ -2,11 +2,11 @@ package com.freebds.backend.service;
 
 import com.freebds.backend.model.Author;
 import com.freebds.backend.repository.AuthorRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -23,15 +23,12 @@ import static org.mockito.Mockito.doReturn;
 @ExtendWith(MockitoExtension.class)
 class AuthorServiceImplTest {
 
+    @Autowired
     private AuthorService authorService;
 
     @Mock
     private AuthorRepository authorRepository;
 
-    @BeforeEach
-    public void setUp() {
-        this.authorService = new AuthorServiceImpl(authorRepository);
-    }
 
     @Test
     void getAuthorById() {

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,9 +13,10 @@ import java.util.Set;
 @Table(name = "graphicnovel")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Getter
 @Setter
-@EqualsAndHashCode(of= {"id"})
+@EqualsAndHashCode
 @ToString(exclude = "graphicNovelAuthors")
 public class GraphicNovel {
 
@@ -44,10 +45,10 @@ public class GraphicNovel {
     private String collection;
 
     @Column(name = "publication_date")
-    private LocalDate publicationDate;
+    private Date publicationDate;
 
     @Column(name = "release_date")
-    private LocalDate releaseDate;
+    private Date releaseDate;
 
     @Column(name = "isbn")
     private String isbn;
@@ -58,7 +59,7 @@ public class GraphicNovel {
     @Column(name = "book_format")
     private String format;
 
-    @Column(name = "info_edition")
+    @Column(name = "info_edition", columnDefinition = "TEXT")
     private String infoEdition;
 
     @Column(name = "reedition_url")

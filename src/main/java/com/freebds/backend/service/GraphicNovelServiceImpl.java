@@ -1,27 +1,37 @@
 package com.freebds.backend.service;
 
 import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedGraphicNovel;
+import com.freebds.backend.dto.GraphicNovelDTO;
+import com.freebds.backend.exception.CollectionItemNotFoundException;
 import com.freebds.backend.exception.EntityNotFoundException;
+import com.freebds.backend.mapper.GraphicNovelMapper;
 import com.freebds.backend.model.GraphicNovel;
 import com.freebds.backend.model.Serie;
 import com.freebds.backend.repository.GraphicNovelRepository;
+import com.freebds.backend.repository.SerieRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
+@RequiredArgsConstructor
 @Service
 public class GraphicNovelServiceImpl implements GraphicNovelService {
 
-    private GraphicNovelRepository graphicNovelRepository;
+    private final GraphicNovelRepository graphicNovelRepository;
+    private final SerieRepository serieRepository;
 
-    public GraphicNovelServiceImpl(GraphicNovelRepository graphicNovelRepository) {
-        this.graphicNovelRepository = graphicNovelRepository;
-    }
+//    public GraphicNovelServiceImpl(GraphicNovelRepository graphicNovelRepository) {
+//        this.graphicNovelRepository = graphicNovelRepository;
+//    }
 
     /**
      * Retrieve a graphic novel by id
@@ -71,8 +81,14 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
      * @return the graphic novels collection
      */
     @Override
-    public Page<GraphicNovel> getGraphicNovels(Pageable pageable, Serie serie) {
-        return graphicNovelRepository.findGraphicNovelsBySerieEquals(pageable, serie);
+    public Page<GraphicNovelDTO> getGraphicNovels(Pageable pageable, Serie serie) {
+        Page<GraphicNovel> graphicNovels = graphicNovelRepository.findGraphicNovelsBySerieEquals(pageable, serie);
+
+        return graphicNovels.map(graphicNovel -> {
+            GraphicNovelDTO graphicNovelDTO = GraphicNovelMapper.INSTANCE.toDTO(graphicNovel);
+            graphicNovelDTO.setAuthorRoles(this.graphicNovelRepository.findAuthorRolesById(graphicNovel.getId()));
+            return graphicNovelDTO;
+        });
     }
 
     /**
@@ -106,13 +122,18 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         try {
-            gc.setPublicationDate(LocalDate.parse("01/" + scrapedGraphicNovel.getPublicationDate(), formatter));
+            //gc.setPublicationDate(LocalDate.parse("01/" + scrapedGraphicNovel.getPublicationDate(), formatter));
+            //gc.setPublicationDate(new SimpleDateFormat("dd/MM/yyyy").parse("01/" + scrapedGraphicNovel.getPublicationDate()));
+            java.util.Date date = new SimpleDateFormat("yyyy-MM-dd").parse("01/" + scrapedGraphicNovel.getPublicationDate());
+            gc.setPublicationDate(new java.sql.Date(date.getTime()));
         } catch (Exception e) {
             gc.setPublicationDate(null);
         }
 
         try {
-            gc.setReleaseDate(LocalDate.parse(scrapedGraphicNovel.getReleaseDate(), formatter));
+            //gc.setReleaseDate(LocalDate.parse(scrapedGraphicNovel.getReleaseDate(), formatter));
+            java.util.Date date = new SimpleDateFormat("yyyy-MM-dd").parse(scrapedGraphicNovel.getReleaseDate());
+            gc.setPublicationDate(new java.sql.Date(date.getTime()));
         } catch (Exception e) {
             gc.setReleaseDate(null);
         }
@@ -144,4 +165,90 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
         // Save graphic novel
         return graphicNovelRepository.saveAndFlush(gc);
     }
+
+    /**
+     * Retrieve all existing graphic novels by multiple criteria
+     * @param pageable the page to get
+     * @param serieTitle the serie title to get
+     * @param serieExternalId the serie external id to get
+     * @param categories the serie category to get
+     * @param status the serie status to get
+     * @param origin the serie origin to get
+     * @param language the serie language to get
+     * @param graphicNovelTitle the graphic novel title to get
+     * @param graphicNovelExternalId the graphic novel external id to get
+     * @param publisher the graphic novel publisher to get
+     * @param collection the graphic novel collection to get
+     * @param isbn the graphic novel ISBN to get
+     * @param publicationDateFrom the graphic novel publication date from to get
+     * @param publicationDateTo the graphic novel publication date to to get
+     * @param lastname the author lastname to get
+     * @param firstname the author firstname to get
+     * @param nickname the author nickname to get
+     * @param authorExternalId the author external id to get
+     * @return a page of filtered graphic novels
+     * @throws CollectionItemNotFoundException in case of invalid selected value request
+     */
+    @Override
+    public Page<GraphicNovel> findBySearchFilters(
+            Pageable pageable,
+            // Serie filters parameters
+            String serieTitle, String serieExternalId, String categories, String status, String origin, String language,
+            // Graphic novel filters parameters
+            String graphicNovelTitle, String graphicNovelExternalId, String publisher, String collection, String isbn, Date publicationDateFrom, Date publicationDateTo,
+            // Author filters parameters
+            String lastname, String firstname, String nickname, String authorExternalId ) throws CollectionItemNotFoundException {
+
+        // Check parameters validity
+        //--------------------------
+        // Set all optional contains searches to lower case for SQL compliance research
+        serieTitle = (serieTitle == null ? null : serieTitle.toLowerCase());
+        graphicNovelTitle = (graphicNovelTitle == null ? null : graphicNovelTitle.toLowerCase());
+        publisher = (publisher == null ? null : publisher.toLowerCase());
+        collection = (collection == null ? null : collection.toLowerCase());
+        lastname = (lastname == null ? null : lastname.toLowerCase());
+        firstname = (firstname == null ? null : firstname.toLowerCase());
+        nickname = (nickname == null ? null : nickname.toLowerCase());
+
+        // Check if selected values from combo box lists exist in DB
+        isItemExists(categories, serieRepository.findDistinctCategories(), "Categories", true);
+        isItemExists(status, serieRepository.findDistinctStatus(), "Status", true);
+        isItemExists(origin, serieRepository.findDistinctOrigins(), "Origin", true);
+        isItemExists(language, serieRepository.findDistinctLanguages(), "Languages", true);
+
+        return this.graphicNovelRepository
+                .findBySearchFilters(
+                        pageable,
+                        serieTitle, serieExternalId, categories, status, origin, language,
+                        graphicNovelTitle, graphicNovelExternalId, publisher, collection, isbn, publicationDateFrom, publicationDateTo,
+                        lastname, firstname, nickname, authorExternalId
+                );
+
+    }
+
+    /**
+     * Count graphic novels
+     * @return the count
+     */
+    @Override
+    public Long count() {
+        return this.graphicNovelRepository.count();
+    }
+
+    public static boolean isItemExists(String item, List<String> collection, String collectionName, boolean isThrowable) {
+        // Check if selected values from combo box lists exist in DB
+        boolean result = true;
+        if(item != null ) {
+            if(! collection.contains(item.toLowerCase())) {
+                result = false;
+            }
+        }
+
+        if(isThrowable && result == false) {
+            throw new CollectionItemNotFoundException(item, collectionName);
+        }
+
+        return result;
+    }
+
 }
