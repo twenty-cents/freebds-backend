@@ -3,7 +3,7 @@ package com.freebds.backend.service;
 import com.freebds.backend.business.scrapers.GenericAuthorUrl;
 import com.freebds.backend.business.scrapers.GenericScrapAuthor;
 import com.freebds.backend.business.scrapers.bedetheque.authors.BedethequeAuthorScraper;
-import com.freebds.backend.exception.CollectionItemNotFoundException;
+import com.freebds.backend.common.web.resources.ContextResource;
 import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.model.Author;
 import com.freebds.backend.model.GraphicNovel;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +27,7 @@ public class AuthorServiceImpl implements AuthorService {
 
     private final AuthorRepository authorRepository;
     private final SerieRepository serieRepository;
+    private final LibraryService libraryService;
 
     /**
      * Get an author by id
@@ -181,79 +181,28 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     /**
-     * Retrieve all existing authors by multiple criteria
-     * @param pageable the page to get
-     * @param serieTitle the serie title to get
-     * @param serieExternalId the serie external id to get
-     * @param categories the serie category to get
-     * @param status the serie status to get
-     * @param origin the serie origin to get
-     * @param language the serie language to get
-     * @param graphicNovelTitle the graphic novel title to get
-     * @param graphicNovelExternalId the graphic novel external id to get
-     * @param publisher the graphic novel publisher to get
-     * @param collection the graphic novel collection to get
-     * @param isbn the graphic novel ISBN to get
-     * @param publicationDateFrom the graphic novel publication date from to get
-     * @param publicationDateTo the graphic novel publication date to to get
-     * @param lastname the author lastname to get
-     * @param firstname the author firstname to get
-     * @param nickname the author nickname to get
-     * @param authorExternalId the author external id to get
-     * @return a page of filtered authors
-     * @throws CollectionItemNotFoundException in case of invalid selected value request
-     */
-    @Override
-    public Page<Author> findBySearchFilters(
-            Pageable pageable,
-            // Serie filters parameters
-            String serieTitle, String serieExternalId, String categories, String status, String origin, String language,
-            // Graphic novel filters parameters
-            String graphicNovelTitle, String graphicNovelExternalId, String publisher, String collection, String isbn, Date publicationDateFrom, Date publicationDateTo,
-            // Author filters parameters
-            String lastname, String firstname, String nickname, String authorExternalId ) throws CollectionItemNotFoundException {
-
-        System.out.println(serieTitle);
-        // Check parameters validity
-        //--------------------------
-        // Set all optional contains searches to lower case for SQL compliance research
-        serieTitle = (serieTitle == null ? null : serieTitle.toLowerCase());
-        graphicNovelTitle = (graphicNovelTitle == null ? null : graphicNovelTitle.toLowerCase());
-        publisher = (publisher == null ? null : publisher.toLowerCase());
-        collection = (collection == null ? null : collection.toLowerCase());
-        lastname = (lastname == null ? null : lastname.toLowerCase());
-        firstname = (firstname == null ? null : firstname.toLowerCase());
-        nickname = (nickname == null ? null : nickname.toLowerCase());
-
-        // Check if selected values from combo box lists exist in DB
-        isItemExists(categories, serieRepository.findDistinctCategories(), "Categories", true);
-        isItemExists(status, serieRepository.findDistinctStatus(), "Status", true);
-        isItemExists(origin, serieRepository.findDistinctOrigins(), "Origin", true);
-        isItemExists(language, serieRepository.findDistinctLanguages(), "Languages", true);
-
-        Page<Author> authors = this.authorRepository
-                .findBySearchFilters(
-                        pageable,
-                        serieTitle, serieExternalId, categories, status, origin, language,
-                        graphicNovelTitle, graphicNovelExternalId, publisher, collection, isbn, publicationDateFrom, publicationDateTo,
-                        lastname, firstname, nickname, authorExternalId
-                );
-
-        return authors;
-    }
-
-    /**
      * Find all authors starting with #
+     * @param contextResource the context to get
      * @param letter the letter
      * @param pageable the page to get
      * @return a page of authors
      */
     @Override
-    public Page<Author> getAuthorsByLastnameStartingWith(String letter, Pageable pageable) {
-        if(letter.equals("0"))
-            return this.authorRepository.findAuthorsByLastnameLessThanIgnoreCase("a", pageable);
-        else
-            return this.authorRepository.findAuthorsByLastnameStartingWithIgnoreCase(letter, pageable);
+    public Page<Author> getAuthorsByLastnameStartingWith(ContextResource contextResource, String letter, Pageable pageable) {
+        if(contextResource.getContext().equals("referential")) {
+            if(letter.equals("0"))
+                return this.authorRepository.findAuthorsByLastnameLessThanIgnoreCase("a", pageable);
+            else
+                return this.authorRepository.findAuthorsByLastnameStartingWithIgnoreCase(letter, pageable);
+        } else {
+            if(letter != null)
+                letter = letter.toLowerCase();
+            if(letter.equals("0"))
+                return this.authorRepository.findAuthorsFromLibraryByLastnameLessThanIgnoreCase(contextResource.getLibrary().getId(),"a", pageable);
+            else
+                return this.authorRepository.findAuthorsFromLibraryByLastnameStartingWithIgnoreCase(contextResource.getLibrary().getId(),letter, pageable);
+        }
+
     }
 
     /**
@@ -265,19 +214,4 @@ public class AuthorServiceImpl implements AuthorService {
         return this.authorRepository.count();
     }
 
-    public static boolean isItemExists(String item, List<String> collection, String collectionName, boolean isThrowable) {
-        // Check if selected values from combo box lists exist in DB
-        boolean result = true;
-        if(item != null ) {
-            if(! collection.contains(item.toLowerCase())) {
-                result = false;
-            }
-        }
-
-        if(isThrowable && result == false) {
-            throw new CollectionItemNotFoundException(item, collectionName);
-        }
-
-        return result;
-    }
 }

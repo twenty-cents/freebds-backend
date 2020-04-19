@@ -7,40 +7,37 @@ import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedSerie;
 import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedSerieUrl;
 import com.freebds.backend.business.scrapers.bedetheque.serie.BedethequeSerieScraper;
 import com.freebds.backend.common.web.resources.AuthorRolesBySerieResource;
+import com.freebds.backend.common.web.resources.ContextResource;
 import com.freebds.backend.common.web.resources.SeriesOriginCounterResource;
 import com.freebds.backend.common.web.resources.SeriesStatusCounterResource;
-import com.freebds.backend.exception.CollectionItemNotFoundException;
 import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.model.Author;
 import com.freebds.backend.model.GraphicNovel;
 import com.freebds.backend.model.Serie;
+import com.freebds.backend.repository.AuthorRepository;
+import com.freebds.backend.repository.LibrarySerieContentRepository;
 import com.freebds.backend.repository.SerieRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.sql.Date;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
+@RequiredArgsConstructor
 @Service
 public class SerieServiceImpl implements SerieService {
 
-    private SerieRepository serieRepository;
-    private GraphicNovelService graphicNovelService;
-    private AuthorService authorService;
-    private GraphicNovelAuthorService graphicNovelAuthorService;
-
-    public SerieServiceImpl(SerieRepository serieRepository,
-                            GraphicNovelService graphicNovelService,
-                            GraphicNovelAuthorService graphicNovelAuthorService,
-                            AuthorService authorService) {
-        this.serieRepository = serieRepository;
-        this.graphicNovelService = graphicNovelService;
-        this.graphicNovelAuthorService = graphicNovelAuthorService;
-        this.authorService = authorService;
-    }
+    private final SerieRepository serieRepository;
+    private final LibrarySerieContentRepository librarySerieContentRepository;
+    private final GraphicNovelService graphicNovelService;
+    private final AuthorService authorService;
+    private final GraphicNovelAuthorService graphicNovelAuthorService;
+    private final AuthorRepository authorRepository;
 
     /**
      * Retrieve all existing series <code>origin types</code> defined by http://wwww.bedetehque.com
@@ -80,99 +77,6 @@ public class SerieServiceImpl implements SerieService {
     @Override
     public List<String> getDistinctLanguages() {
         return this.serieRepository.findDistinctLanguages();
-    }
-
-    /**
-     * Retrieve all series, filtered by title, origin, status and category
-     *
-     * @param pageable the page to get
-     * @param title    the title to get
-     * @param origin   the origin to get
-     * @param status   the status to get
-     * @param category the category to get
-     * @return a page of filtered series
-     */
-    @Override
-    public Page<Serie> getFilteredSeries(Pageable pageable, String title, String origin, String status, String category) {
-        return this.serieRepository.findSeriesByTitleIgnoreCaseContainingAndOriginIgnoreCaseContainingAndStatusIgnoreCaseContainingAndCategoriesIgnoreCaseContaining(
-                pageable, title, origin, status, category
-        );
-    }
-
-    /**
-     *
-     * @param pageable
-     * @param serieTitle
-     * @param serieExternalId
-     * @param categories
-     * @param status
-     * @param origin
-     * @param language
-     * @param graphicNovelTitle
-     * @param graphicNovelExternalId
-     * @param publisher
-     * @param collection
-     * @param isbn
-     * @param publicationDateFrom
-     * @param publicationDateTo
-     * @param lastname
-     * @param firstname
-     * @param nickname
-     * @param authorExternalId
-     * @return
-     * @throws CollectionItemNotFoundException
-     */
-    @Override
-    public Page<Serie> findBySearchFilters (
-            Pageable pageable,
-            // Serie filters parameters
-            String serieTitle, String serieExternalId, String categories, String status, String origin, String language,
-            // Graphic novel filters parameters
-            String graphicNovelTitle, String graphicNovelExternalId, String publisher, String collection, String isbn, Date publicationDateFrom, Date publicationDateTo,
-            // Author filters parameters
-            String lastname, String firstname, String nickname, String authorExternalId ) throws CollectionItemNotFoundException {
-
-        // Check parameters validity
-        //--------------------------
-        // Force null value for empty parameters
-        serieTitle = (serieTitle == "" ? null : serieTitle);
-        serieExternalId = (serieExternalId == "" ? null : serieExternalId);
-        categories = (categories == "" ? null : categories);
-        status = (status == "" ? null : status);
-        origin = (origin == "" ? null : origin);
-        language = (language == "" ? null : language);
-        graphicNovelTitle = (graphicNovelTitle == "" ? null : graphicNovelTitle);
-        graphicNovelExternalId = (graphicNovelExternalId == "" ? null : graphicNovelExternalId);
-        publisher = (publisher == "" ? null : publisher);
-        collection = (collection == "" ? null : collection);
-        isbn = (isbn == "" ? null : isbn);
-        lastname = (lastname == "" ? null : lastname);
-        firstname = (firstname == "" ? null : firstname);
-        nickname = (nickname == "" ? null : nickname);
-        authorExternalId = (authorExternalId == "" ? null : authorExternalId);
-
-        // Set all optional contains searches to lower case for SQL compliance research
-        serieTitle = (serieTitle == null ? null : serieTitle.toLowerCase());
-        graphicNovelTitle = (graphicNovelTitle == null ? null : graphicNovelTitle.toLowerCase());
-        publisher = (publisher == null ? null : publisher.toLowerCase());
-        collection = (collection == null ? null : collection.toLowerCase());
-        lastname = (lastname == null ? null : lastname.toLowerCase());
-        firstname = (firstname == null ? null : firstname.toLowerCase());
-        nickname = (nickname == null ? null : nickname.toLowerCase());
-
-        // Check if selected values from combo box lists exist in DB
-        isItemExists(categories, serieRepository.findDistinctCategories(), "Categories", true);
-        isItemExists(status, serieRepository.findDistinctStatus(), "Status", true);
-        isItemExists(origin, serieRepository.findDistinctOrigins(), "Origin", true);
-        isItemExists(language, serieRepository.findDistinctLanguages(), "Languages", true);
-
-        return this.serieRepository
-                .findBySearchFilters(
-                        pageable,
-                        serieTitle, serieExternalId, categories, status, origin, language,
-                        graphicNovelTitle, graphicNovelExternalId, publisher, collection, isbn, publicationDateFrom, publicationDateTo,
-                        lastname, firstname, nickname, authorExternalId
-                );
     }
 
     /**
@@ -311,16 +215,27 @@ public class SerieServiceImpl implements SerieService {
 
     /**
      * Retrieve all series starting with the given letter
+     * @param contextResource the context to get
      * @param letter the letter
      * @param pageable the page to get
      * @return a page of series
      */
     @Override
-    public Page<Serie> getSeriesByTitleStartingWith(String letter, Pageable pageable) {
-        if(letter.equals("0"))
-            return this.serieRepository.findSeriesByTitleLessThanIgnoreCase("a", pageable);
-        else
-            return this.serieRepository.findSeriesByTitleStartingWithIgnoreCase(letter, pageable);
+    public Page<Serie> getSeriesByTitleStartingWith(ContextResource contextResource, String letter, Pageable pageable) {
+        if(contextResource.getContext().equals("referential")) {
+            if(letter.equals("0"))
+                return this.serieRepository.findSeriesByTitleLessThanIgnoreCase("a", pageable);
+            else
+                return this.serieRepository.findSeriesByTitleStartingWithIgnoreCase(letter, pageable);
+        } else {
+            if(letter != null)
+                letter = letter.toLowerCase();
+            if(letter.equals("0"))
+                return this.serieRepository.findSeriesFromLibraryByTitleLessThanIgnoreCase(contextResource.getLibrary().getId(), "a", pageable);
+            else
+                return this.serieRepository.findSeriesFromLibraryByTitleStartingWithIgnoreCase(contextResource.getLibrary().getId(), letter, pageable);
+        }
+
     }
 
     /**
@@ -348,22 +263,6 @@ public class SerieServiceImpl implements SerieService {
     @Override
     public List<SeriesStatusCounterResource> countSeriesByStatus() {
         return this.serieRepository.countSeriesByStatus();
-    }
-
-    public static boolean isItemExists(String item, List<String> collection, String collectionName, boolean isThrowable) {
-        // Check if selected values from combo box lists exist in DB
-        boolean result = true;
-        if(item != null ) {
-            if(! collection.contains(item)) {
-                result = false;
-            }
-        }
-
-        if(isThrowable && result == false) {
-            throw new CollectionItemNotFoundException(item, collectionName);
-        }
-
-        return result;
     }
 
 }

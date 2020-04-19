@@ -86,8 +86,8 @@ public class GraphicNovel {
     )
     private Set<GraphicNovelAuthor> graphicNovelAuthors = new HashSet<>();
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+//    @JsonIgnore
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "serie_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "serie_id"))
     private Serie serie;
 

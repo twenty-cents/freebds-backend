@@ -98,6 +98,7 @@ public interface GraphicNovelRepository extends JpaRepository<GraphicNovel, Long
      * @param firstname the author firstname to get
      * @param nickname the author nickname to get
      * @param authorExternalId the author external id to get
+     * @param nationality the author nationality to get
      * @return a page of filtered graphic novels
      */
     @Query(
@@ -122,7 +123,8 @@ public interface GraphicNovelRepository extends JpaRepository<GraphicNovel, Long
                     "    WHERE (:authorExternalId IS NULL OR a.externalId = :authorExternalId) " +
                     "    AND (:lastname IS NULL OR LOWER(a.lastname) LIKE %:lastname%)" +
                     "    AND (:firstname IS NULL OR LOWER(a.firstname) LIKE %:firstname%)" +
-                    "    AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%))",
+                    "    AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)" +
+                    "    AND (:nationality IS NULL OR a.nationality = :nationality))",
             countQuery = "SELECT COUNT(distinct g) FROM GraphicNovel g JOIN Serie s ON s.id = g.serie.id" +
                     // Serie filters
                     "  WHERE (:serieTitle IS NULL OR LOWER(s.title) LIKE %:serieTitle%) " +
@@ -144,7 +146,8 @@ public interface GraphicNovelRepository extends JpaRepository<GraphicNovel, Long
                     "    WHERE (:authorExternalId IS NULL OR a.externalId = :authorExternalId) " +
                     "    AND (:lastname IS NULL OR LOWER(a.lastname) LIKE %:lastname%)" +
                     "    AND (:firstname IS NULL OR LOWER(a.firstname) LIKE %:firstname%)" +
-                    "    AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%))"
+                    "    AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)" +
+                    "    AND (:nationality IS NULL OR a.nationality = :nationality))"
     )
     Page<GraphicNovel> findBySearchFilters(
             Pageable pageable,
@@ -167,6 +170,23 @@ public interface GraphicNovelRepository extends JpaRepository<GraphicNovel, Long
             @Param("lastname") String lastname,
             @Param("firstname") String firstname,
             @Param("nickname") String nickname,
-            @Param("authorExternalId") String authorExternalId);
+            @Param("authorExternalId") String authorExternalId,
+            @Param("nationality") String nationality);
 
+    /**
+     * Find all graphic novels from a serie within a library
+     * @param libraryId : the id library to scan
+     * @param serieId the id serie to get
+     * @param pageable : the page to get
+     * @return a page of graphic novels
+     */
+    @Query(
+            value = "SELECT DISTINCT g FROM GraphicNovel g " +
+                    "  JOIN LibraryContent lg ON g.id = lg.graphicNovel.id " +
+                    "WHERE lg.library.id = :libraryId AND g.serie.id = :serieId",
+            countQuery = "SELECT COUNT(DISTINCT g) FROM GraphicNovel g " +
+                    "  JOIN LibraryContent lg ON g.id = lg.graphicNovel.id " +
+                    "WHERE lg.library.id = :libraryId AND g.serie.id = :serieId"
+    )
+    Page<GraphicNovel> findGraphicNovelsFromLibraryBySerie(@Param("libraryId") Long libraryId, @Param("serieId") Long serieId, Pageable pageable);
 }

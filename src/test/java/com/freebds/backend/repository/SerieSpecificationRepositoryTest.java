@@ -85,7 +85,7 @@ class SerieSpecificationRepositoryTest {
         Page<Serie> series = serieRepository.findBySearchFilters( expectedPage.getPageable(),
                 "gaston", null, null, null, null, null,
                  null, null, null, null, null, publicationDateFrom, publicationDateTo,
-                 null, null, null, null);
+                 null, null, null, null, null);
 
         System.out.println(series.toList().size());
         for(Serie s : series.toList()) {

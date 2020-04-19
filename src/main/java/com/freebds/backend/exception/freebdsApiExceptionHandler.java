@@ -64,4 +64,19 @@ public class freebdsApiExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiError, HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * How to proceed in case of an FreeBdsApiException
+     *
+     * @param ex the FreeBdsApiException
+     * @return an API Error wrapped in a ResponseEntity with status 404.
+     */
+    @ExceptionHandler(FreeBdsApiException.class)
+    public ResponseEntity<Object> handleFreeBdsApiException(FreeBdsApiException ex) {
+        ApiErrorDTO apiError = new ApiErrorDTO(
+                "004",
+                ex.getApiMessage(),
+                ex.getErrorMessage());
+        return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
+    }
+
 }

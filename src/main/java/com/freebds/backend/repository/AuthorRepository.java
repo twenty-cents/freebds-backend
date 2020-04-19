@@ -90,6 +90,7 @@ public interface AuthorRepository extends JpaRepository<Author, Long>, JpaSpecif
      * @param firstname the author firstname to get
      * @param nickname the author nickname to get
      * @param authorExternalId the author external id to get
+     * @param nationality the author nationality to get
      * @return a page of filtered authors
      */
     @Query(
@@ -116,7 +117,8 @@ public interface AuthorRepository extends JpaRepository<Author, Long>, JpaSpecif
                     "  AND (:authorExternalId IS NULL OR a.externalId = :authorExternalId) " +
                     "  AND (:lastname IS NULL OR LOWER(a.lastname) LIKE %:lastname%)" +
                     "  AND (:firstname IS NULL OR LOWER(a.firstname) LIKE %:firstname%)" +
-                    "  AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)",
+                    "  AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)" +
+                    "  AND (:nationality IS NULL OR a.nationality = :nationality)",
             countQuery = "SELECT COUNT(distinct a) FROM Author a " +
                         "  JOIN GraphicNovelAuthor ga ON a.id = ga.author.id " +
                         "  JOIN GraphicNovel g ON ga.graphicNovel.id = g.id " +
@@ -140,7 +142,8 @@ public interface AuthorRepository extends JpaRepository<Author, Long>, JpaSpecif
                         "  AND (:authorExternalId IS NULL OR a.externalId = :authorExternalId) " +
                         "  AND (:lastname IS NULL OR LOWER(a.lastname) LIKE %:lastname%)" +
                         "  AND (:firstname IS NULL OR LOWER(a.firstname) LIKE %:firstname%)" +
-                        "  AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)"
+                        "  AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)" +
+                        "  AND (:nationality IS NULL OR a.nationality = :nationality)"
     )
     Page<Author> findBySearchFilters(
             Pageable pageable,
@@ -163,7 +166,8 @@ public interface AuthorRepository extends JpaRepository<Author, Long>, JpaSpecif
             @Param("lastname") String lastname,
             @Param("firstname") String firstname,
             @Param("nickname") String nickname,
-            @Param("authorExternalId") String authorExternalId);
+            @Param("authorExternalId") String authorExternalId,
+            @Param("nationality") String nationality);
 
     /**
      * Find all authors starting with the given letter
@@ -180,4 +184,163 @@ public interface AuthorRepository extends JpaRepository<Author, Long>, JpaSpecif
      * @return a page of authors
      */
     Page<Author> findAuthorsByLastnameLessThanIgnoreCase(@Param("letter") String letter, Pageable pageable);
+
+    /**
+     * ################################################################################################################
+     * ################################################################################################################
+     * ################################################################################################################
+     */
+    /**
+     * Find authors within a library
+     * @param libraryId : the library to scan
+     * @param titleStartingWith : the lastname to get
+     * @param pageable : the page to get
+     * @return a page of authors
+     */
+    @Query(
+            value =
+                    "SELECT DISTINCT a FROM Author a " +
+                    "  JOIN GraphicNovelAuthor ga ON ga.author.id = a.id " +
+                    "  JOIN GraphicNovel g ON ga.graphicNovel.id = g.id " +
+                    "  JOIN LibraryContent lg on g.id = lg.graphicNovel.id " +
+                    "WHERE lg.library.id = :libraryId " +
+                    "  AND (a.lastname IS NULL OR LOWER(a.lastname) LIKE :titleStartingWith%) ",
+            countQuery =
+                    "SELECT COUNT(DISTINCT a) FROM Author a " +
+                    "  JOIN GraphicNovelAuthor ga ON ga.author.id = a.id " +
+                    "  JOIN GraphicNovel g ON ga.graphicNovel.id = g.id " +
+                    "  JOIN LibraryContent lg on g.id = lg.graphicNovel.id " +
+                    "WHERE lg.library.id = :libraryId " +
+                    "  AND (a.lastname IS NULL OR LOWER(a.lastname) LIKE :titleStartingWith%) "
+    )
+    Page<Author> findAuthorsFromLibraryByLastnameStartingWithIgnoreCase(@Param("libraryId") Long libraryId, @Param("titleStartingWith") String titleStartingWith, Pageable pageable);
+
+    /**
+     * Find authors within a library starting with #
+     * @param libraryId : the library to scan
+     * @param titleStartingWith : the lastname to get
+     * @param pageable : the page to get
+     * @return a page of authors
+     */
+    @Query(
+            value =
+                    "SELECT DISTINCT a FROM Author a " +
+                            "  JOIN GraphicNovelAuthor ga ON ga.author.id = a.id " +
+                            "  JOIN GraphicNovel g ON ga.graphicNovel.id = g.id " +
+                            "  JOIN LibraryContent lg on g.id = lg.graphicNovel.id " +
+                            "WHERE lg.library.id = :libraryId " +
+                            "  AND (a.lastname IS NULL OR LOWER(a.lastname) < :titleStartingWith) ",
+            countQuery =
+                    "SELECT COUNT(DISTINCT a) FROM Author a " +
+                            "  JOIN GraphicNovelAuthor ga ON ga.author.id = a.id " +
+                            "  JOIN GraphicNovel g ON ga.graphicNovel.id = g.id " +
+                            "  JOIN LibraryContent lg on g.id = lg.graphicNovel.id " +
+                            "WHERE lg.library.id = :libraryId " +
+                            "  AND (a.lastname IS NULL OR LOWER(a.lastname) < :titleStartingWith) "
+    )
+    Page<Author> findAuthorsFromLibraryByLastnameLessThanIgnoreCase(@Param("libraryId") Long libraryId, @Param("titleStartingWith") String titleStartingWith, Pageable pageable);
+
+    /**
+     * Retrieve all existing authors by multiple criteria
+     * @param pageable the page to get
+     * @param libraryId the library id to get
+     * @param serieTitle the serie title to get
+     * @param serieExternalId the serie external id to get
+     * @param categories the serie category to get
+     * @param status the serie status to get
+     * @param origin the serie origin to get
+     * @param language the serie language to get
+     * @param graphicNovelTitle the graphic novel title to get
+     * @param graphicNovelExternalId the graphic novel external id to get
+     * @param publisher the graphic novel publisher to get
+     * @param collection the graphic novel collection to get
+     * @param isbn the graphic novel ISBN to get
+     * @param publicationDateFrom the graphic novel publication date from to get
+     * @param publicationDateTo the graphic novel publication date to to get
+     * @param lastname the author lastname to get
+     * @param firstname the author firstname to get
+     * @param nickname the author nickname to get
+     * @param authorExternalId the author external id to get
+     * @param nationality the author nationality to get
+     * @return a page of filtered authors
+     */
+    @Query(
+            value = "SELECT distinct a FROM Author a " +
+                    "  JOIN GraphicNovelAuthor ga ON a.id = ga.author.id " +
+                    "  JOIN GraphicNovel g ON ga.graphicNovel.id = g.id  " +
+                    "  JOIN LibraryContent lg ON g.id = lg.graphicNovel.id " +
+                    "  JOIN Serie s ON g.serie.id = s.id " +
+                    // Serie filters
+                    "WHERE lg.library.id = :libraryId " +
+                    "  AND (:serieTitle IS NULL OR LOWER(s.title) LIKE %:serieTitle%) " +
+                    "  AND (:serieExternalId IS NULL OR s.externalId = :serieExternalId) " +
+                    "  AND (:categories IS NULL OR s.categories LIKE %:categories%) " +
+                    "  AND (:status IS NULL OR s.status = :status) " +
+                    "  AND (:origin IS NULL OR s.origin = :origin) " +
+                    "  AND (:language IS NULL OR s.langage = :language) " +
+                    // Graphic novel filters
+                    "  AND (:graphicNovelTitle IS NULL OR LOWER(g.title) LIKE %:graphicNovelTitle%)" +
+                    "  AND (:graphicNovelExternalId IS NULL OR g.externalId = :graphicNovelExternalId) " +
+                    "  AND (:publisher IS NULL OR LOWER(g.publisher) LIKE %:publisher%)" +
+                    "  AND (:collection IS NULL OR LOWER(g.collection) LIKE %:collection%)" +
+                    "  AND (:isbn IS NULL OR g.isbn = :isbn) " +
+                    "  AND (g.publicationDate BETWEEN :publicationDateFrom AND :publicationDateTo) " +
+                    // Author filters
+                    "  AND (:authorExternalId IS NULL OR a.externalId = :authorExternalId) " +
+                    "  AND (:lastname IS NULL OR LOWER(a.lastname) LIKE %:lastname%)" +
+                    "  AND (:firstname IS NULL OR LOWER(a.firstname) LIKE %:firstname%)" +
+                    "  AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)" +
+                    "  AND (:nationality IS NULL OR a.nationality = :nationality)",
+            countQuery = "SELECT COUNT(distinct a) FROM Author a " +
+                    "  JOIN GraphicNovelAuthor ga ON a.id = ga.author.id " +
+                    "  JOIN GraphicNovel g ON ga.graphicNovel.id = g.id  " +
+                    "  JOIN LibraryContent lg ON g.id = lg.graphicNovel.id " +
+                    "  JOIN Serie s ON g.serie.id = s.id " +
+                    // Serie filters
+                    "WHERE lg.library.id = :libraryId " +
+                    "  AND (:serieTitle IS NULL OR LOWER(s.title) LIKE %:serieTitle%) " +
+                    "  AND (:serieExternalId IS NULL OR s.externalId = :serieExternalId) " +
+                    "  AND (:categories IS NULL OR s.categories LIKE %:categories%) " +
+                    "  AND (:status IS NULL OR s.status = :status) " +
+                    "  AND (:origin IS NULL OR s.origin = :origin) " +
+                    "  AND (:language IS NULL OR s.langage = :language) " +
+                    // Graphic novel filters
+                    "  AND (:graphicNovelTitle IS NULL OR LOWER(g.title) LIKE %:graphicNovelTitle%)" +
+                    "  AND (:graphicNovelExternalId IS NULL OR g.externalId = :graphicNovelExternalId) " +
+                    "  AND (:publisher IS NULL OR LOWER(g.publisher) LIKE %:publisher%)" +
+                    "  AND (:collection IS NULL OR LOWER(g.collection) LIKE %:collection%)" +
+                    "  AND (:isbn IS NULL OR g.isbn = :isbn) " +
+                    "  AND (g.publicationDate BETWEEN :publicationDateFrom AND :publicationDateTo) " +
+                    // Author filters
+                    "  AND (:authorExternalId IS NULL OR a.externalId = :authorExternalId) " +
+                    "  AND (:lastname IS NULL OR LOWER(a.lastname) LIKE %:lastname%)" +
+                    "  AND (:firstname IS NULL OR LOWER(a.firstname) LIKE %:firstname%)" +
+                    "  AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)" +
+                    "  AND (:nationality IS NULL OR a.nationality = :nationality)"
+    )
+    Page<Author> findInLibraryBySearchFilters(
+            Pageable pageable,
+            @Param("libraryId") Long libraryId,
+            // Serie filters parameters
+            @Param("serieTitle") String serieTitle,
+            @Param("serieExternalId") String serieExternalId,
+            @Param("categories") String categories,
+            @Param("status") String status,
+            @Param("origin") String origin,
+            @Param("language") String language,
+            // Graphic novel filters parameters
+            @Param("graphicNovelTitle") String graphicNovelTitle,
+            @Param("graphicNovelExternalId") String graphicNovelExternalId,
+            @Param("publisher") String publisher,
+            @Param("collection") String collection,
+            @Param("isbn") String isbn,
+            @Param("publicationDateFrom") Date publicationDateFrom,
+            @Param("publicationDateTo") Date publicationDateTo,
+            // Author filters parameters
+            @Param("lastname") String lastname,
+            @Param("firstname") String firstname,
+            @Param("nickname") String nickname,
+            @Param("authorExternalId") String authorExternalId,
+            @Param("nationality") String nationality);
+
 }

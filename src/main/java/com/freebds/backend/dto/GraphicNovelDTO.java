@@ -1,6 +1,8 @@
 package com.freebds.backend.dto;
 
 import com.freebds.backend.common.web.resources.AuthorRoleResource;
+import com.freebds.backend.model.LibraryContent;
+import com.freebds.backend.model.Serie;
 import io.swagger.annotations.ApiModel;
 import lombok.*;
 
@@ -38,7 +40,9 @@ public class GraphicNovelDTO {
     private String backCoverThumbnailUrl;
     private String pageUrl;
     private String pageThumbnailUrl;
+    private Serie serie;
 
     private List<AuthorRoleResource> authorRoles;
+    private LibraryContent libraryContent;
 
 }

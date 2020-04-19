@@ -106,6 +106,7 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
      * @param firstname
      * @param nickname
      * @param authorExternalId
+      * @param nationality the author nationality to get
      * @return
      */
     @Query(
@@ -130,7 +131,8 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
                     "    WHERE (:authorExternalId IS NULL OR a.externalId = :authorExternalId) " +
                     "    AND (:lastname IS NULL OR LOWER(a.lastname) LIKE %:lastname%)" +
                     "    AND (:firstname IS NULL OR LOWER(a.firstname) LIKE %:firstname%)" +
-                    "    AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%))",
+                    "    AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)" +
+                    "    AND (:nationality IS NULL OR a.nationality = :nationality))",
             countQuery = "SELECT COUNT(distinct s) FROM Serie s JOIN GraphicNovel g ON s.id = g.serie.id" +
                         // Serie filters
                         "  WHERE (:serieTitle IS NULL OR LOWER(s.title) LIKE %:serieTitle%) " +
@@ -152,7 +154,8 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
                         "    WHERE (:authorExternalId IS NULL OR a.externalId = :authorExternalId) " +
                         "    AND (:lastname IS NULL OR LOWER(a.lastname) LIKE %:lastname%)" +
                         "    AND (:firstname IS NULL OR LOWER(a.firstname) LIKE %:firstname%)" +
-                        "    AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%))"
+                        "    AND (:nickname IS NULL OR LOWER(a.nickname) LIKE %:nickname%)" +
+                        "    AND (:nationality IS NULL OR a.nationality = :nationality))"
     )
     Page<Serie> findBySearchFilters(
             Pageable pageable,
@@ -175,7 +178,8 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
             @Param("lastname") String lastname,
             @Param("firstname") String firstname,
             @Param("nickname") String nickname,
-            @Param("authorExternalId") String authorExternalId);
+            @Param("authorExternalId") String authorExternalId,
+            @Param("nationality") String nationality);
 
     /**
      * Find all series from an author (scenario, dessin, couleurs roles only)
@@ -267,4 +271,47 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
             Pageable pageable,
             @Param("publicationDateFrom") Date publicationDateFrom,
             @Param("publicationDateTo") Date publicationDateTo);
+
+    /**
+     * Find series within a library
+     * @param libraryId : the library to scan
+     * @param titleStartingWith : the title to get
+     * @param pageable : the page to get
+     * @return a page of series
+     */
+    @Query(
+            value =
+                    "SELECT DISTINCT s FROM Serie s " +
+                            "  INNER JOIN LibrarySerieContent ls ON ls.serie.id = s.id " +
+                            "WHERE ls.library.id = :libraryId " +
+                            "  AND (s.title IS NULL OR LOWER(s.title) LIKE :titleStartingWith%) ",
+            countQuery =
+                    "SELECT COUNT(s) FROM Serie s " +
+                            "  INNER JOIN LibrarySerieContent ls ON ls.serie.id = s.id " +
+                            "WHERE ls.library.id = :libraryId " +
+                            "  AND (s.title IS NULL OR LOWER(s.title) LIKE :titleStartingWith%) "
+    )
+    Page<Serie> findSeriesFromLibraryByTitleStartingWithIgnoreCase(@Param("libraryId") Long libraryId, @Param("titleStartingWith") String titleStartingWith, Pageable pageable);
+
+    /**
+     * Find series within a library starting with #
+     * @param libraryId : the library to scan
+     * @param titleStartingWith : the title to get
+     * @param pageable : the page to get
+     * @return a page of series
+     */
+    @Query(
+            value =
+                    "SELECT DISTINCT s FROM Serie s " +
+                            "  INNER JOIN LibrarySerieContent ls ON ls.serie.id = s.id " +
+                            "WHERE ls.library.id = :libraryId " +
+                            "  AND (s.title IS NULL OR LOWER(s.title) < :titleStartingWith) ",
+            countQuery =
+                    "SELECT COUNT(s) FROM Serie s " +
+                            "  INNER JOIN LibrarySerieContent ls ON ls.serie.id = s.id " +
+                            "WHERE ls.library.id = :libraryId " +
+                            "  AND (s.title IS NULL OR LOWER(s.title) < :titleStartingWith) "
+    )
+    Page<Serie> findSeriesFromLibraryByTitleLessThanIgnoreCase(@Param("libraryId") Long libraryId, @Param("titleStartingWith") String titleStartingWith, Pageable pageable);
+
 }

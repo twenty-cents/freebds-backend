@@ -102,7 +102,7 @@ class AuthorRepositoryTest {
         Page<Author> authors = authorRepository.findBySearchFilters(
                 expectedPage.getPageable(), null, null, null, null, null, null,
                 null, null, null, null, null, publicationDateFrom, publicationDateTo,
-                null, null, null, null);
+                null, null, null, null, null);
         System.out.println(authors.getContent().size());
         //for(Author author : authors.getContent())
             //System.out.println(author.getId() + ", " + author.getLastname() + " " + author.getFirstname() + ", " + author.getExternalId());

@@ -1,6 +1,7 @@
 package com.freebds.backend.controller;
 
 import com.freebds.backend.common.web.resources.AuthorRolesBySerieResource;
+import com.freebds.backend.common.web.resources.ContextResource;
 import com.freebds.backend.common.web.resources.SeriesOriginCounterResource;
 import com.freebds.backend.common.web.resources.SeriesStatusCounterResource;
 import com.freebds.backend.dto.*;
@@ -10,6 +11,7 @@ import com.freebds.backend.mapper.LanguageMapper;
 import com.freebds.backend.mapper.SerieMapper;
 import com.freebds.backend.mapper.StatusMapper;
 import com.freebds.backend.model.Serie;
+import com.freebds.backend.service.ContextService;
 import com.freebds.backend.service.SerieService;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.sql.Date;
 import java.util.List;
 
 @RestController
@@ -34,6 +35,7 @@ import java.util.List;
 @CrossOrigin("*")
 public class SerieController {
 
+    private final ContextService contextService;
     private final SerieService serieService;
 
     /**
@@ -79,87 +81,6 @@ public class SerieController {
     }
 
     /**
-     * Retrieve all series, filtered by title, origin, status and category
-     *
-     * @param pageable the page to get
-     * @param title the title to get
-     * @param origin the origin to get
-     * @param status the status to get
-     * @param category the category to get
-     * @return a page of filtered series
-     */
-    @GetMapping("/filter")
-    public Page<SerieDTO> getFilteredSeries(
-            @PageableDefault(size=25, page = 0, direction = Sort.Direction.ASC) Pageable pageable,
-            @ApiParam(value = "Query param for 'title'") @Valid @RequestParam(value = "title", defaultValue = "") String title,
-            @ApiParam(value = "Query param for 'origin'") @Valid @RequestParam(value = "origin", defaultValue = "") String origin,
-            @ApiParam(value = "Query param for 'status'") @Valid @RequestParam(value = "status", defaultValue = "") String status,
-            @ApiParam(value = "Query param for 'category'") @Valid @RequestParam(value = "category", defaultValue = "") String category
-    ){
-        Page<Serie> series = serieService.getFilteredSeries(pageable, title, origin, status, category);
-        // Convert authors in serieDTO and return the result to the front
-        // google : spring how to convert pageable to dto
-        // https://www.programcreek.com/java-api-examples/?class=org.springframework.data.domain.Page&method=map
-        return series.map(serie -> SerieMapper.INSTANCE.toDTO(serie));
-    }
-
-    /**
-     *
-     * @param pageable
-     * @param serieTitle
-     * @param serieExternalId
-     * @param origin
-     * @param status
-     * @param categories
-     * @param language
-     * @param graphicNovelTitle
-     * @param graphicNovelExternalId
-     * @param publisher
-     * @param collection
-     * @param isbn
-     * @param publicationDateFrom
-     * @param publicationDateTo
-     * @param lastname
-     * @param firstname
-     * @param nickname
-     * @param authorExternalId
-     * @return
-     */
-    @GetMapping("/search")
-    public Page<SerieDTO> getFilteredSeries2(
-            @PageableDefault(size=25, page = 0, direction = Sort.Direction.ASC) Pageable pageable,
-            @ApiParam(value = "Query param for 'serietitle'") @Valid @RequestParam(value = "serietitle", required = false) String serieTitle,
-            @ApiParam(value = "Query param for 'serieexternalId'") @Valid @RequestParam(value = "serieexternalId", required = false) String serieExternalId,
-            @ApiParam(value = "Query param for 'origin'") @Valid @RequestParam(value = "origin", required = false) String origin,
-            @ApiParam(value = "Query param for 'status'") @Valid @RequestParam(value = "status", required = false) String status,
-            @ApiParam(value = "Query param for 'categories'") @Valid @RequestParam(value = "categories", required = false) String categories,
-            @ApiParam(value = "Query param for 'language'") @Valid @RequestParam(value = "language", required = false) String language,
-            @ApiParam(value = "Query param for 'graphicnoveltitle'") @Valid @RequestParam(value = "graphicnoveltitle", required = false) String graphicNovelTitle,
-            @ApiParam(value = "Query param for 'graphicnovelexternalid'") @Valid @RequestParam(value = "graphicnovelexternalid", required = false) String graphicNovelExternalId,
-            @ApiParam(value = "Query param for 'publisher'") @Valid @RequestParam(value = "publisher", required = false) String publisher,
-            @ApiParam(value = "Query param for 'collection'") @Valid @RequestParam(value = "collection", required = false) String collection,
-            @ApiParam(value = "Query param for 'isbn'") @Valid @RequestParam(value = "isbn", required = false) String isbn,
-            @ApiParam(value = "Query param for 'publicationdatefrom'") @Valid @RequestParam(value = "publicationdatefrom", required = false, defaultValue = "0001-01-01") Date publicationDateFrom,
-            @ApiParam(value = "Query param for 'publicationdateto'") @Valid @RequestParam(value = "publicationdateto", required = false, defaultValue = "9999-01-01") Date publicationDateTo,
-            @ApiParam(value = "Query param for 'lastname'") @Valid @RequestParam(value = "lastname", required = false) String lastname,
-            @ApiParam(value = "Query param for 'firstname'") @Valid @RequestParam(value = "firstname", required = false) String firstname,
-            @ApiParam(value = "Query param for 'nickname'") @Valid @RequestParam(value = "nickname", required = false) String nickname,
-            @ApiParam(value = "Query param for 'authorexternalid'") @Valid @RequestParam(value = "authorexternalid", required = false) String authorExternalId
-    ) {
-        // Call the associated service
-        Page<Serie> series = serieService.findBySearchFilters(
-                pageable,
-                serieTitle, serieExternalId, categories, status, origin, language,
-                graphicNovelTitle, graphicNovelExternalId, publisher, collection, isbn, publicationDateFrom, publicationDateTo,
-                lastname, firstname, nickname, authorExternalId
-        );
-        // Convert authors in serieDTO and return the result to the front
-        // google : spring how to convert pageable to dto
-        // https://www.programcreek.com/java-api-examples/?class=org.springframework.data.domain.Page&method=map
-        return series.map(serie -> SerieMapper.INSTANCE.toDTO(serie));
-    }
-
-    /**
      * Get a serie by Id
      *
      * @param id the serie id to get
@@ -183,16 +104,27 @@ public class SerieController {
 
     /**
      * Retrieve all series starting with the given letter
-     * @param letter the letter
+     * @param context the context to get
+     * @param titleStartingWith the letter
      * @param pageable the page to get
      * @return a page of series
      */
-    @GetMapping("/letters/{letter}")
+    @GetMapping("/letter")
     Page<SerieDTO> getSeriesByTitleStartingWith(
             @PageableDefault(size=25, page = 0, direction = Sort.Direction.ASC) Pageable pageable,
-            @PathVariable String letter
+            @ApiParam(value = "Query param for 'context'") @Valid @RequestParam(value = "context", defaultValue = "") String context,
+            @ApiParam(value = "Query param for 'libraryId'", example = "0") @Valid @RequestParam(value = "libraryId", defaultValue = "0") Long libraryId,
+            @ApiParam(value = "Query param for 'titleStartingWith'") @Valid @RequestParam(value = "titleStartingWith", required = false) String titleStartingWith
     ){
-        Page<Serie> series = serieService.getSeriesByTitleStartingWith(letter, pageable);
+        // Get context (throw an exception if incorrect)
+        ContextResource contextResource = this.contextService.getContext(context, libraryId, "USER");
+
+        // Force all if no letter specified
+        if(titleStartingWith == null)
+            titleStartingWith = "";
+
+        // Call the service
+        Page<Serie> series = serieService.getSeriesByTitleStartingWith(contextResource, titleStartingWith, pageable);
         return series.map(serie -> SerieMapper.INSTANCE.toDTO(serie));
     }
 

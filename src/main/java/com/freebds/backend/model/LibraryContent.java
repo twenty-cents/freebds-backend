@@ -1,5 +1,6 @@
 package com.freebds.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -12,8 +13,9 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode(of= {"id"})
-@ToString
+@Builder
+@EqualsAndHashCode(exclude= {"reviews"})
+@ToString(exclude = {"library", "graphicNovel", "reviews"})
 public class LibraryContent {
 
     @Id
@@ -22,10 +24,12 @@ public class LibraryContent {
     @Column(name="id", updatable = false, nullable = false)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "library_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "library_id"))
     private Library library;
 
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "graphicnovel_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "graphicnovel_id"))
     private GraphicNovel graphicNovel;
@@ -38,6 +42,9 @@ public class LibraryContent {
 
     @Column(name = "is_numeric")
     private Boolean isNumeric;
+
+    @Column(name = "is_wishlist")
+    private Boolean isWishlist;
 
     @Column(name = "local_storage")
     private String localStorage;
@@ -54,6 +61,7 @@ public class LibraryContent {
     @Column(name = "last_update_user")
     private String lastUpdateUser;
 
+    @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "libraryContent")
     private List<Review> reviews;
 }

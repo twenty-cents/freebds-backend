@@ -1,6 +1,7 @@
 package com.freebds.backend.service;
 
 import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedGraphicNovel;
+import com.freebds.backend.common.web.resources.ContextResource;
 import com.freebds.backend.dto.GraphicNovelDTO;
 import com.freebds.backend.exception.CollectionItemNotFoundException;
 import com.freebds.backend.exception.EntityNotFoundException;
@@ -8,6 +9,7 @@ import com.freebds.backend.model.GraphicNovel;
 import com.freebds.backend.model.Serie;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
@@ -25,11 +27,17 @@ public interface GraphicNovelService {
      */
     GraphicNovel getGraphicNovelById(Long id) throws EntityNotFoundException;
 
+    GraphicNovelDTO getGraphicNovelByIdWithAuthorRoles(Long id) throws EntityNotFoundException;
+
     GraphicNovel getGraphicNovelByExternalId(String externalId) throws EntityNotFoundException;
 
     List<GraphicNovel> getGraphicNovels(Long serieId);
 
-    Page<GraphicNovelDTO> getGraphicNovels(Pageable pageable, Serie serie);
+    Page<GraphicNovel> getGraphicNovels(Pageable pageable, Serie serie);
+
+    Page<GraphicNovelDTO> getGraphicNovels(ContextResource contextResource, Pageable pageable, Serie serie);
+
+    GraphicNovelDTO addGraphicNovelDependencies(GraphicNovelDTO graphicNovelDTO);
 
     GraphicNovel saveAndFlush(GraphicNovel graphicNovel);
 
@@ -72,4 +80,13 @@ public interface GraphicNovelService {
      * @return
      */
     Long count();
+
+    /**
+     * Find all graphic novels from a serie within a library
+     * @param serieId the id serie to get
+     * @param pageable : the page to get
+     * @return a page of graphic novels
+     */
+    Page<GraphicNovel> getGraphicNovelsFromLibraryBySerie(@Param("serieId") Long serieId, Pageable pageable);
+
 }
