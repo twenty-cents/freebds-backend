@@ -1,5 +1,6 @@
 package com.freebds.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -7,7 +8,9 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -35,11 +38,13 @@ public class User {
     @Size(max = 20)
     private String username;
 
-    @Column(name = "id_github")
-    private String idGithub;
+    @Column(name = "firstname")
+    @NotBlank
+    private String firstname;
 
-    @Column(name = "id_google")
-    private String idGoogle;
+    @Column(name = "lastname")
+    @NotBlank
+    private String lastname;
 
     @Column(name = "avatar")
     private String avatar;
@@ -67,6 +72,14 @@ public class User {
             joinColumns = {@JoinColumn(name = "users_id", referencedColumnName= "id", foreignKey = @ForeignKey(name = "users_id") ) },
             inverseJoinColumns = { @JoinColumn(name = "library_id", referencedColumnName= "id", foreignKey = @ForeignKey(name = "library_id")) })
     private Set<Library> libraries = new HashSet<>();
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Review> reviews = new ArrayList<>();
 
     public User() {
     }

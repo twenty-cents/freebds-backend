@@ -5,6 +5,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -26,12 +27,12 @@ public class LibrarySerieContent {
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "library_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "library_id"))
+    @JoinColumn(name = "library_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "library_id"), unique = false)
     private Library library;
 
     @JsonIgnore
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "serie_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "serie_id"))
+    @OneToOne
+    @JoinColumn(name = "serie_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "serie_id"), unique = false)
     private Serie serie;
 
     @Column(name = "is_favorite")
@@ -48,6 +49,13 @@ public class LibrarySerieContent {
 
     @Column(name = "last_update_user")
     private String lastUpdateUser;
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "librarySerieContent",
+            orphanRemoval = true
+    )
+    private List<LibraryContent> libraryContents = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "librarySerieContent")

@@ -24,8 +24,11 @@ public class UserLibrary {
     @JoinColumn(name = "library_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "library_id"))
     private Library library;
 
-    @Column(name = "role", length = 50, insertable=false, updatable=false)
+    @Column(name = "role", length = 50, insertable = false, updatable = false)
     private String role = "";
+
+    @Column(name = "is_active")
+    private Boolean isActive;
 
     public UserLibrary() {
     }
@@ -69,6 +72,14 @@ public class UserLibrary {
         this.id.setRole(role);
     }
 
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -77,11 +88,12 @@ public class UserLibrary {
         return id.equals(that.id) &&
                 user.equals(that.user) &&
                 library.equals(that.library) &&
-                role.equals(that.role);
+                role.equals(that.role) &&
+                isActive.equals(that.isActive);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, user, library, role);
+        return Objects.hash(id, user, library, role, isActive);
     }
 }

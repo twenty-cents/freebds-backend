@@ -1,8 +1,7 @@
 package com.freebds.backend.repository;
 
 import com.freebds.backend.model.Author;
-import com.freebds.backend.model.Serie;
-import org.junit.jupiter.api.Order;
+import com.freebds.backend.model.GraphicNovel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,51 +47,33 @@ class AuthorRepositoryTest {
     }
 
     @Test
-    @Order(10)
-    void addAuthor(){
-        Author p1 = new Author();
-        p1.setId(1L);
-        p1.setExternalId("33648");
-        p1.setLastname("Connor");
-        p1.setFirstname("Sarah");
-        p1 = authorRepository.saveAndFlush(p1);
-
-        assertThat(p1.getId()).isEqualTo(1L);
-        assertThat(p1.getExternalId()).isEqualTo("33648");
-        assertThat(p1.getLastname()).isEqualTo("Connor");
-        assertThat(p1.getFirstname()).isEqualTo("Sarah");
+    void findFirstByExternalId() {
+        Author author = authorRepository.findFirstByExternalId("148");
+        assertThat(author.getLastname()).isEqualTo("Uderzo");
     }
 
     @Test
-    @Order(20)
-    void findAll() {
-        //insertDb();
-        List<Author> authors = authorRepository.findAll();
-        for(Author author : authors)
-            System.out.println(author.getId() + ", " + author.getLastname() + " " + author.getFirstname() + ", " + author.getExternalId());
-
-        assertThat(authors.size()).isEqualTo(3);
-    }
-
-    @Test
-    @Order(30)
-    void findFirstByExternalId(){
-        Author author = authorRepository.findFirstByExternalId("33648");
-        assertThat(author.getLastname()).isEqualTo("uderzo");
-    }
-
-    @Test
-    @Order(31)
-    void findAuthorByExternalId(){
-        List<Author> authors = authorRepository.findAuthorsByExternalId("33648");
+    void findAuthorsByExternalId() {
+        List<Author> authors = authorRepository.findAuthorsByExternalId("148");
         assertThat(authors.size()).isEqualTo(1);
     }
 
+    @Test
+    void findDistinctNationalities() {
+        List<String> nationalities = authorRepository.findDistinctNationalities();
+        assertThat(nationalities.size()).isGreaterThan(0);
+    }
 
     @Test
-    @Order(40)
+    void findGraphicNovelAuthorByAuthor() {
+        Page expectedPage = new PageImpl(new ArrayList<GraphicNovel>());
+        Page<GraphicNovel> graphicNovels = authorRepository.findGraphicNovelAuthorByAuthor(expectedPage.getPageable(), 33648L);
+        assertThat(graphicNovels.getSize()).isGreaterThan(0);
+    }
+
+    @Test
     void findBySearchFilters() throws ParseException {
-        Page expectedPage = new PageImpl(new ArrayList<Serie>());
+        Page expectedPage = new PageImpl(new ArrayList<Author>());
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         java.util.Date parsed = format.parse("0001-01-01");
         java.sql.Date publicationDateFrom = new java.sql.Date(parsed.getTime());
@@ -102,14 +83,54 @@ class AuthorRepositoryTest {
         Page<Author> authors = authorRepository.findBySearchFilters(
                 expectedPage.getPageable(), null, null, null, null, null, null,
                 null, null, null, null, null, publicationDateFrom, publicationDateTo,
-                null, null, null, null, null);
-        System.out.println(authors.getContent().size());
-        //for(Author author : authors.getContent())
-            //System.out.println(author.getId() + ", " + author.getLastname() + " " + author.getFirstname() + ", " + author.getExternalId());
+                null, null, null, "148", null);
 
-        assertThat(authors.getContent().size()).isEqualTo(2);
+        assertThat(authors.getContent().size()).isEqualTo(1);
     }
 
+    @Test
+    void findAuthorsByLastnameStartingWithIgnoreCase() {
+        Page expectedPage = new PageImpl(new ArrayList<Author>());
+        Page<Author> authors = authorRepository.findAuthorsByLastnameStartingWithIgnoreCase("A", expectedPage.getPageable());
+        assertThat(authors.getSize()).isGreaterThan(0);
+    }
 
+    @Test
+    void findAuthorsByLastnameLessThanIgnoreCase() {
+        Page expectedPage = new PageImpl(new ArrayList<Author>());
+        Page<Author> authors = authorRepository.findAuthorsByLastnameLessThanIgnoreCase("a", expectedPage.getPageable());
+        assertThat(authors.getSize()).isGreaterThan(0);
+    }
+
+    @Test
+    void findAuthorsFromLibraryByLastnameStartingWithIgnoreCase() {
+        Page expectedPage = new PageImpl(new ArrayList<Author>());
+        Page<Author> authors = authorRepository.findAuthorsFromLibraryByLastnameStartingWithIgnoreCase(1L,"a", expectedPage.getPageable());
+        assertThat(authors.getSize()).isGreaterThan(0);
+    }
+
+    @Test
+    void findAuthorsFromLibraryByLastnameLessThanIgnoreCase() {
+        Page expectedPage = new PageImpl(new ArrayList<Author>());
+        Page<Author> authors = authorRepository.findAuthorsFromLibraryByLastnameLessThanIgnoreCase(1L,"a", expectedPage.getPageable());
+        assertThat(authors.getSize()).isGreaterThan(0);
+    }
+
+    @Test
+    void findInLibraryBySearchFilters() throws ParseException {
+        Page expectedPage = new PageImpl(new ArrayList<Author>());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        java.util.Date parsed = format.parse("0001-01-01");
+        java.sql.Date publicationDateFrom = new java.sql.Date(parsed.getTime());
+        parsed = format.parse("9999-01-01");
+        java.sql.Date publicationDateTo = new java.sql.Date(parsed.getTime());
+
+        Page<Author> authors = authorRepository.findBySearchFilters(
+                expectedPage.getPageable(), null, null, null, null, null, null,
+                null, null, null, null, null, publicationDateFrom, publicationDateTo,
+                null, null, null, "148", null);
+
+        assertThat(authors.getContent().size()).isEqualTo(1);
+    }
 
 }

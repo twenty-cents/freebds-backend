@@ -1,5 +1,6 @@
 package com.freebds.backend.service;
 
+import com.freebds.backend.common.web.author.resources.AuthorResource;
 import com.freebds.backend.model.Author;
 import com.freebds.backend.repository.AuthorRepository;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ class AuthorServiceImplTest {
         given(authorRepository.findAll(pAuthors)).willReturn(expectedPage);
 
         // When
-        Page<Author> actualAuthors = authorService.getAuthors(pAuthors);
+        Page<AuthorResource> actualAuthors = authorService.getAuthors(pAuthors);
 
         // Then
         assertThat(actualAuthors.getSize()).isEqualTo(expectedPage.getSize());

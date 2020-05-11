@@ -30,7 +30,12 @@ public class LibraryContent {
     private Library library;
 
     @JsonIgnore
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "library_serie_content_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "LibrarySerieContent_id"))
+    private LibrarySerieContent librarySerieContent;
+
+    @JsonIgnore
+    @OneToOne
     @JoinColumn(name = "graphicnovel_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "graphicnovel_id"))
     private GraphicNovel graphicNovel;
 

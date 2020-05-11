@@ -3,8 +3,10 @@ package com.freebds.backend.service;
 import com.freebds.backend.business.scrapers.GenericAuthorUrl;
 import com.freebds.backend.business.scrapers.GenericScrapAuthor;
 import com.freebds.backend.business.scrapers.bedetheque.authors.BedethequeAuthorScraper;
-import com.freebds.backend.common.web.resources.ContextResource;
+import com.freebds.backend.common.web.author.resources.AuthorResource;
+import com.freebds.backend.common.web.context.resources.ContextResource;
 import com.freebds.backend.exception.EntityNotFoundException;
+import com.freebds.backend.mapper.AuthorMapper;
 import com.freebds.backend.model.Author;
 import com.freebds.backend.model.GraphicNovel;
 import com.freebds.backend.repository.AuthorRepository;
@@ -54,8 +56,9 @@ public class AuthorServiceImpl implements AuthorService {
      * @return a page object with authors
      */
     @Override
-    public Page<Author> getAuthors(Pageable page) {
-        return authorRepository.findAll(page);
+    public Page<AuthorResource> getAuthors(Pageable page) {
+        Page<Author> authors = authorRepository.findAll(page);
+        return authors.map(author -> AuthorMapper.INSTANCE.toResource(author));
     }
 
     /**
@@ -117,6 +120,7 @@ public class AuthorServiceImpl implements AuthorService {
      * @return a page of filtered authors
      */
     @Override
+    @Deprecated
     public Page<Author> getFilteredAuthors(Pageable pageable, String lastname, String firstname, String nickname, String nationality) {
         return authorRepository.findAuthorsByLastnameIgnoreCaseContainingAndFirstnameIgnoreCaseContainingAndNicknameIgnoreCaseContainingAndNationalityIgnoreCaseContaining(pageable, lastname, firstname, nickname, nationality);
     }
@@ -188,30 +192,23 @@ public class AuthorServiceImpl implements AuthorService {
      * @return a page of authors
      */
     @Override
-    public Page<Author> getAuthorsByLastnameStartingWith(ContextResource contextResource, String letter, Pageable pageable) {
+    public Page<AuthorResource> getAuthorsByLastnameStartingWith(ContextResource contextResource, String letter, Pageable pageable) {
+        Page<Author> authors;
         if(contextResource.getContext().equals("referential")) {
-            if(letter.equals("0"))
-                return this.authorRepository.findAuthorsByLastnameLessThanIgnoreCase("a", pageable);
+            if(letter.equals("#"))
+                authors = this.authorRepository.findAuthorsByLastnameLessThanIgnoreCase("a", pageable);
             else
-                return this.authorRepository.findAuthorsByLastnameStartingWithIgnoreCase(letter, pageable);
+                authors = this.authorRepository.findAuthorsByLastnameStartingWithIgnoreCase(letter, pageable);
         } else {
             if(letter != null)
                 letter = letter.toLowerCase();
-            if(letter.equals("0"))
-                return this.authorRepository.findAuthorsFromLibraryByLastnameLessThanIgnoreCase(contextResource.getLibrary().getId(),"a", pageable);
+            if(letter.equals("#"))
+                authors = this.authorRepository.findAuthorsFromLibraryByLastnameLessThanIgnoreCase(contextResource.getLibrary().getId(),"a", pageable);
             else
-                return this.authorRepository.findAuthorsFromLibraryByLastnameStartingWithIgnoreCase(contextResource.getLibrary().getId(),letter, pageable);
+                authors = this.authorRepository.findAuthorsFromLibraryByLastnameStartingWithIgnoreCase(contextResource.getLibrary().getId(),letter, pageable);
         }
 
-    }
-
-    /**
-     * Count authors
-     * @return the count
-     */
-    @Override
-    public Long count() {
-        return this.authorRepository.count();
+        return authors.map(author -> AuthorMapper.INSTANCE.toResource(author));
     }
 
 }

@@ -16,7 +16,7 @@ import java.util.Optional;
 public interface LibraryContentRepository extends JpaRepository<LibraryContent, Long> {
 
     //@Query("SELECT c.isFavorite, c. FROM LibraryContent  c WHERE c.graphicNovel.id = :graphicNovelId")
-    Optional<LibraryContent> findFirstByGraphicNovel_Id(@Param("graphicNovelId") Long graphicNovelId);
+    Optional<LibraryContent> findFirstByLibrary_IdAndGraphicNovel_Id(@Param("libraryId") Long libraryId, @Param("graphicNovelId") Long graphicNovelId);
 
     /**
      * Find all graphic novels from a serie within a library
@@ -158,4 +158,15 @@ public interface LibraryContentRepository extends JpaRepository<LibraryContent, 
             @Param("nickname") String nickname,
             @Param("authorExternalId") String authorExternalId,
             @Param("nationality") String nationality);
+
+    /**
+     *
+     * @param libraryId
+     * @param librarySerieId
+     * @param graphicNovelId
+     * @return
+     */
+    Optional<LibraryContent> findFirstByLibrary_IdAndLibrarySerieContent_IdAndGraphicNovel_Id(
+            @Param("libraryId") Long libraryId, @Param("librarySerieId") Long librarySerieId, @Param("graphicNovelId") Long graphicNovelId);
+
 }

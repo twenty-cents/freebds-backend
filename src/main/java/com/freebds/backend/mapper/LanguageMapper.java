@@ -1,14 +1,14 @@
 package com.freebds.backend.mapper;
 
-import com.freebds.backend.dto.LanguageDTO;
+import com.freebds.backend.common.web.serie.resources.LanguageResource;
 
 import java.util.List;
 
 public class LanguageMapper {
 
-    public static LanguageDTO toDTO(List<String> languages) {
-        LanguageDTO languageDTO = new LanguageDTO();
-        languageDTO.setLanguages(languages);
-        return languageDTO;
+    public static LanguageResource toResource(List<String> languages) {
+        LanguageResource languageResource = new LanguageResource();
+        languageResource.setLanguages(languages);
+        return languageResource;
     }
 }

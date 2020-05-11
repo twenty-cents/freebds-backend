@@ -1,14 +1,14 @@
 package com.freebds.backend.mapper;
 
-import com.freebds.backend.dto.CategoriesDTO;
+import com.freebds.backend.common.web.serie.resources.CategoriesResource;
 
 import java.util.List;
 
 public class CategoriesMapper {
 
-    public static CategoriesDTO toDTO(List<String> categories) {
-        CategoriesDTO categoriesDTO = new CategoriesDTO();
-        categoriesDTO.setCategories(categories);
-        return categoriesDTO;
+    public static CategoriesResource toResource(List<String> categories) {
+        CategoriesResource categoriesResource = new CategoriesResource();
+        categoriesResource.setCategories(categories);
+        return categoriesResource;
     }
 }

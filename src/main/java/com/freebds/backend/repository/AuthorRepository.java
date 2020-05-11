@@ -1,5 +1,6 @@
 package com.freebds.backend.repository;
 
+import com.freebds.backend.common.web.dashboard.resources.PeriodicityCountResource;
 import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.model.Author;
 import com.freebds.backend.model.GraphicNovel;
@@ -67,6 +68,7 @@ public interface AuthorRepository extends JpaRepository<Author, Long>, JpaSpecif
      * @param nationality the author nationality to get
      * @return a page of filtered authors
      */
+    @Deprecated
     Page<Author> findAuthorsByLastnameIgnoreCaseContainingAndFirstnameIgnoreCaseContainingAndNicknameIgnoreCaseContainingAndNationalityIgnoreCaseContaining(
             Pageable page, String lastname, String firstname, String nickname, String nationality);
 

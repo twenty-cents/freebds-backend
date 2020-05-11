@@ -1,10 +1,13 @@
 package com.freebds.backend.service;
 
 import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedGraphicNovel;
-import com.freebds.backend.common.web.resources.ContextResource;
-import com.freebds.backend.dto.GraphicNovelDTO;
-import com.freebds.backend.exception.CollectionItemNotFoundException;
+import com.freebds.backend.common.utility.BarcodeImageDecoder;
+import com.freebds.backend.common.web.graphicNovel.requests.BarcodeScanRequest;
+import com.freebds.backend.common.web.graphicNovel.resources.GraphicNovelMinimumResource;
+import com.freebds.backend.common.web.graphicNovel.resources.GraphicNovelResource;
+import com.freebds.backend.common.web.context.resources.ContextResource;
 import com.freebds.backend.exception.EntityNotFoundException;
+import com.freebds.backend.exception.FreeBdsApiException;
 import com.freebds.backend.mapper.GraphicNovelMapper;
 import com.freebds.backend.model.GraphicNovel;
 import com.freebds.backend.model.Library;
@@ -12,18 +15,25 @@ import com.freebds.backend.model.LibraryContent;
 import com.freebds.backend.model.Serie;
 import com.freebds.backend.repository.GraphicNovelRepository;
 import com.freebds.backend.repository.LibraryContentRepository;
+import com.freebds.backend.repository.ReviewRepository;
 import com.freebds.backend.repository.SerieRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.sql.Date;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,10 +44,7 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
     private final SerieRepository serieRepository;
     private final LibraryService libraryService;
     private final LibraryContentRepository libraryContentRepository;
-
-//    public GraphicNovelServiceImpl(GraphicNovelRepository graphicNovelRepository) {
-//        this.graphicNovelRepository = graphicNovelRepository;
-//    }
+    private final ReviewRepository reviewRepository;
 
     /**
      * Retrieve a graphic novel by id
@@ -65,35 +72,43 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
      * @throws EntityNotFoundException in case ID is not found in DB.
      */
     @Override
-    public GraphicNovelDTO getGraphicNovelByIdWithAuthorRoles(Long id) throws EntityNotFoundException {
+    public GraphicNovelResource getGraphicNovel(ContextResource contextResource, Long id) throws EntityNotFoundException {
         Optional<GraphicNovel> optionalGraphicNovel = graphicNovelRepository.findById(id);
 
         if(optionalGraphicNovel.isPresent()){
-            GraphicNovelDTO graphicNovelDTO = GraphicNovelMapper.INSTANCE.toDTO(optionalGraphicNovel.get());
-            // Get author roles
-            graphicNovelDTO.setAuthorRoles(this.graphicNovelRepository.findAuthorRolesById(graphicNovelDTO.getId()));
-            // Get optional collection infos
-            Optional<LibraryContent> optionalLibraryContent = this.libraryContentRepository.findFirstByGraphicNovel_Id(graphicNovelDTO.getId());
-            if(optionalLibraryContent.isPresent()){
-                graphicNovelDTO.setLibraryContent(optionalLibraryContent.get());
-            }
-            return graphicNovelDTO;
+            return this.addGraphicNovelResourceDependencies(contextResource, optionalGraphicNovel.get());
         } else{
             throw new EntityNotFoundException(id, "Graphic Novel");
         }
     }
 
-    @Override
-    public GraphicNovelDTO addGraphicNovelDependencies(GraphicNovelDTO graphicNovelDTO) {
+    /**
+     * Add graphic novel dependencies
+     * - Authors roles
+     * - Library infos
+     * @param contextResource
+     * @param graphicNovel
+     * @return
+     */
+    public GraphicNovelResource addGraphicNovelResourceDependencies(ContextResource contextResource, GraphicNovel graphicNovel) {
+        // Build resource
+        GraphicNovelResource graphicNovelResource = GraphicNovelMapper.INSTANCE.toResource(graphicNovel);
+
         // Get author roles
-        graphicNovelDTO.setAuthorRoles(this.graphicNovelRepository.findAuthorRolesById(graphicNovelDTO.getId()));
+        graphicNovelResource.setAuthorRoles(this.graphicNovelRepository.findAuthorRolesById(graphicNovelResource.getId()));
         // Get optional collection infos
-        Optional<LibraryContent> optionalLibraryContent = this.libraryContentRepository.findFirstByGraphicNovel_Id(graphicNovelDTO.getId());
+        Optional<LibraryContent> optionalLibraryContent = this.libraryContentRepository.findFirstByLibrary_IdAndGraphicNovel_Id(contextResource.getLibrary().getId(), graphicNovelResource.getId());
         if(optionalLibraryContent.isPresent()){
-            graphicNovelDTO.setLibraryContent(optionalLibraryContent.get());
+            graphicNovelResource.setLibraryContent(optionalLibraryContent.get());
+            // Add reviews
+            graphicNovelResource.setReviews(this.reviewRepository.findReviewsByLibraryContent(
+                    optionalLibraryContent.get().getLibrarySerieContent().getId(),
+                    optionalLibraryContent.get().getId()));
         }
-        return graphicNovelDTO;
+        return graphicNovelResource;
     }
+
+
     /**
      * Get a graphic novel by external id
      *
@@ -132,20 +147,31 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
      * Retrieve all graphic novels on a serie
      * @param contextResource the user context
      * @param pageable the page to get
-     * @param serie the serie to get
+     * @param serieId the serie id to get
      * @return the graphic novels collection
      */
     @Override
-    public Page<GraphicNovelDTO> getGraphicNovels(ContextResource contextResource, Pageable pageable, Serie serie) {
-        // Get a page of graphic novels from the request serie
-        Page<GraphicNovel> graphicNovels = this.graphicNovelRepository.findGraphicNovelsBySerieEquals(pageable, serie);
-        // Transform to DTO
-        Page<GraphicNovelDTO> graphicNovelDTOs = graphicNovels.map(graphicNovel -> GraphicNovelMapper.INSTANCE.toDTO(graphicNovel));
-        // Add library infos
-        if(contextResource.getContext().equals("LIBRARY")) {
-            graphicNovelDTOs.map(graphicNovelDTO -> addGraphicNovelDependencies(graphicNovelDTO));
+    public Page<GraphicNovelResource> getGraphicNovels(ContextResource contextResource, Pageable pageable, Long serieId) throws EntityNotFoundException {
+        // Check if the requested serie exists
+        Serie serie;
+        Optional<Serie> optionalSerie = this.serieRepository.findById(serieId);
+        if(optionalSerie.isPresent()) {
+            serie = optionalSerie.get();
+        } else {
+            throw new EntityNotFoundException(serieId, "Serie");
         }
-        return graphicNovelDTOs;
+
+        if(contextResource.getContext().equals("referential")) {
+            // Get a page of graphic novels from the requests serie
+            Page<GraphicNovel> graphicNovels = this.graphicNovelRepository.findGraphicNovelsBySerieEquals(pageable, serie);
+            // Transform to resource and add library infos
+            return graphicNovels.map(graphicNovel -> addGraphicNovelResourceDependencies(contextResource, graphicNovel));
+        } else {
+            // Get a page of graphic novels from the requests serie
+            Page<GraphicNovel> graphicNovels = this.graphicNovelRepository.findGraphicNovelsFromLibraryBySerie(contextResource.getLibrary().getId(), serie.getId(), pageable);
+            // Transform to resource and add library infos
+            return graphicNovels.map(graphicNovel -> addGraphicNovelResourceDependencies(contextResource, graphicNovel));
+        }
     }
 
     /**
@@ -224,92 +250,6 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
     }
 
     /**
-     * Retrieve all existing graphic novels by multiple criteria
-     * @param pageable the page to get
-     * @param serieTitle the serie title to get
-     * @param serieExternalId the serie external id to get
-     * @param categories the serie category to get
-     * @param status the serie status to get
-     * @param origin the serie origin to get
-     * @param language the serie language to get
-     * @param graphicNovelTitle the graphic novel title to get
-     * @param graphicNovelExternalId the graphic novel external id to get
-     * @param publisher the graphic novel publisher to get
-     * @param collection the graphic novel collection to get
-     * @param isbn the graphic novel ISBN to get
-     * @param publicationDateFrom the graphic novel publication date from to get
-     * @param publicationDateTo the graphic novel publication date to to get
-     * @param lastname the author lastname to get
-     * @param firstname the author firstname to get
-     * @param nickname the author nickname to get
-     * @param authorExternalId the author external id to get
-     * @return a page of filtered graphic novels
-     * @throws CollectionItemNotFoundException in case of invalid selected value request
-     */
-    @Override
-    public Page<GraphicNovel> findBySearchFilters(
-            Pageable pageable,
-            // Serie filters parameters
-            String serieTitle, String serieExternalId, String categories, String status, String origin, String language,
-            // Graphic novel filters parameters
-            String graphicNovelTitle, String graphicNovelExternalId, String publisher, String collection, String isbn, Date publicationDateFrom, Date publicationDateTo,
-            // Author filters parameters
-            String lastname, String firstname, String nickname, String authorExternalId ) throws CollectionItemNotFoundException {
-
-        // Check parameters validity
-        //--------------------------
-        // Force null value for empty parameters
-        serieTitle = (serieTitle == "" ? null : serieTitle);
-        serieExternalId = (serieExternalId == "" ? null : serieExternalId);
-        categories = (categories == "" ? null : categories);
-        status = (status == "" ? null : status);
-        origin = (origin == "" ? null : origin);
-        language = (language == "" ? null : language);
-        graphicNovelTitle = (graphicNovelTitle == "" ? null : graphicNovelTitle);
-        graphicNovelExternalId = (graphicNovelExternalId == "" ? null : graphicNovelExternalId);
-        publisher = (publisher == "" ? null : publisher);
-        collection = (collection == "" ? null : collection);
-        isbn = (isbn == "" ? null : isbn);
-        lastname = (lastname == "" ? null : lastname);
-        firstname = (firstname == "" ? null : firstname);
-        nickname = (nickname == "" ? null : nickname);
-        authorExternalId = (authorExternalId == "" ? null : authorExternalId);
-
-        // Set all optional contains searches to lower case for SQL compliance research
-        serieTitle = (serieTitle == null ? null : serieTitle.toLowerCase());
-        graphicNovelTitle = (graphicNovelTitle == null ? null : graphicNovelTitle.toLowerCase());
-        publisher = (publisher == null ? null : publisher.toLowerCase());
-        collection = (collection == null ? null : collection.toLowerCase());
-        lastname = (lastname == null ? null : lastname.toLowerCase());
-        firstname = (firstname == null ? null : firstname.toLowerCase());
-        nickname = (nickname == null ? null : nickname.toLowerCase());
-
-        // Check if selected values from combo box lists exist in DB
-        isItemExists(categories, serieRepository.findDistinctCategories(), "Categories", true);
-        isItemExists(status, serieRepository.findDistinctStatus(), "Status", true);
-        isItemExists(origin, serieRepository.findDistinctOrigins(), "Origin", true);
-        isItemExists(language, serieRepository.findDistinctLanguages(), "Languages", true);
-        String nationality = "";
-        return this.graphicNovelRepository
-                .findBySearchFilters(
-                        pageable,
-                        serieTitle, serieExternalId, categories, status, origin, language,
-                        graphicNovelTitle, graphicNovelExternalId, publisher, collection, isbn, publicationDateFrom, publicationDateTo,
-                        lastname, firstname, nickname, authorExternalId, nationality
-                );
-
-    }
-
-    /**
-     * Count graphic novels
-     * @return the count
-     */
-    @Override
-    public Long count() {
-        return this.graphicNovelRepository.count();
-    }
-
-    /**
      * Find all graphic novels from a serie within a library
      * @param serieId the id serie to get
      * @param pageable : the page to get
@@ -322,20 +262,57 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
         return this.graphicNovelRepository.findGraphicNovelsFromLibraryBySerie(library.getId(), serieId, pageable);
     }
 
-    public static boolean isItemExists(String item, List<String> collection, String collectionName, boolean isThrowable) {
-        // Check if selected values from combo box lists exist in DB
-        boolean result = true;
-        if(item != null ) {
-            if(! collection.contains(item.toLowerCase())) {
-                result = false;
-            }
+    /**
+     * Add a graphic novel in the current user collection
+     * @param contextResource the context
+     * @param serieId the id serie to get
+     * @return the added graphic novel in the current collection
+     */
+    @Override
+    public List<GraphicNovelMinimumResource> getMissingGraphicNovelsFromLibraryBySerie(ContextResource contextResource, Long serieId) {
+        return this.graphicNovelRepository.findMissingGraphicNovelsFromLibraryBySerie(contextResource.getLibrary().getId(), serieId);
+    }
+
+    /**
+     * Scan a barcode image of a graphic novel
+     * @param contextResource the context
+     * @param barcodeScanRequest the barcode to scan
+     * @return a list of associate graphic novels
+     */
+    @Override
+    public List<GraphicNovelResource> scan(ContextResource contextResource, BarcodeScanRequest barcodeScanRequest) throws FreeBdsApiException {
+
+        // Decode base64 image
+        byte[] decodedBytes = Base64.getDecoder().decode(barcodeScanRequest.getBarcode());
+        String barcodeFormat = "";
+        String barcodeValue = "";
+        try {
+            FileUtils.writeByteArrayToFile(new File("c://home/ean13-webcam.jpg"), decodedBytes);
+            InputStream inputstream = new FileInputStream("c://home/ean13-webcam.jpg");
+            BarcodeImageDecoder barcodeImageDecoder = new BarcodeImageDecoder();
+            // https://stackoverflow.com/questions/19874557/read-barcode-from-an-image-in-java
+            // https://stackoverflow.com/questions/10583622/com-google-zxing-notfoundexception-exception-comes-when-core-java-program-execut
+            BarcodeImageDecoder.BarcodeInfo barcodeInfo = barcodeImageDecoder.decodeImage(inputstream);
+            barcodeFormat = barcodeInfo.getFormat().trim();
+            barcodeValue = barcodeInfo.getText().trim();
+        } catch ( IOException e1 ) {
+            throw new FreeBdsApiException("Erreur I/O", "");
+        } catch ( BarcodeImageDecoder.BarcodeDecodingException e2) {
+            throw new FreeBdsApiException("Erreur de reconnaissance du CB", "");
         }
 
-        if(isThrowable && result == false) {
-            throw new CollectionItemNotFoundException(item, collectionName);
+        // Code-barre EAN13
+        String barcode = "";
+        if(barcodeValue.length() == 13) {
+            barcode = barcodeValue.substring(0,3) + "-" + barcodeValue.substring(3,4) + "-"
+                    + barcodeValue.substring(4,9) + "-" + barcodeValue.substring(9,12) + "-"
+                    + barcodeValue.substring(12,13);
+            System.out.println(barcode);
         }
 
-        return result;
+        List<GraphicNovel> graphicNovels = this.graphicNovelRepository.findGraphicNovelsByISBN(barcode);
+        // Add library infos
+        return graphicNovels.stream().map(graphicNovel -> addGraphicNovelResourceDependencies(contextResource, graphicNovel)).collect(Collectors.toList());
     }
 
 }

@@ -1,10 +1,10 @@
 package com.freebds.backend.controller;
 
 
-import com.freebds.backend.common.web.payload.request.LoginRequest;
-import com.freebds.backend.common.web.payload.request.SignupRequest;
-import com.freebds.backend.common.web.payload.response.JwtResponse;
-import com.freebds.backend.common.web.payload.response.MessageResponse;
+import com.freebds.backend.common.web.payload.requests.LoginRequest;
+import com.freebds.backend.common.web.payload.requests.SignupRequest;
+import com.freebds.backend.common.web.payload.resources.JwtResponse;
+import com.freebds.backend.common.web.payload.resources.MessageResponse;
 import com.freebds.backend.model.ERole;
 import com.freebds.backend.model.Role;
 import com.freebds.backend.model.User;
@@ -64,6 +64,9 @@ public class AuthController {
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getEmail(),
+                userDetails.getAvatar(),
+                userDetails.getFirstname(),
+                userDetails.getLastname(),
                 roles));
     }
 

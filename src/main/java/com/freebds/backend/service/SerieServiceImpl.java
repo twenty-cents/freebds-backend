@@ -6,15 +6,16 @@ import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedGraphicNovel;
 import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedSerie;
 import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedSerieUrl;
 import com.freebds.backend.business.scrapers.bedetheque.serie.BedethequeSerieScraper;
-import com.freebds.backend.common.web.resources.AuthorRolesBySerieResource;
-import com.freebds.backend.common.web.resources.ContextResource;
-import com.freebds.backend.common.web.resources.SeriesOriginCounterResource;
-import com.freebds.backend.common.web.resources.SeriesStatusCounterResource;
+import com.freebds.backend.common.web.serie.resources.AuthorRolesBySerieResource;
+import com.freebds.backend.common.web.context.resources.ContextResource;
+import com.freebds.backend.common.web.dashboard.resources.SeriesStatusCounterResource;
+import com.freebds.backend.common.web.serie.resources.*;
 import com.freebds.backend.exception.EntityNotFoundException;
+import com.freebds.backend.mapper.*;
 import com.freebds.backend.model.Author;
 import com.freebds.backend.model.GraphicNovel;
+import com.freebds.backend.model.LibrarySerieContent;
 import com.freebds.backend.model.Serie;
-import com.freebds.backend.repository.AuthorRepository;
 import com.freebds.backend.repository.LibrarySerieContentRepository;
 import com.freebds.backend.repository.SerieRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,6 @@ public class SerieServiceImpl implements SerieService {
     private final GraphicNovelService graphicNovelService;
     private final AuthorService authorService;
     private final GraphicNovelAuthorService graphicNovelAuthorService;
-    private final AuthorRepository authorRepository;
 
     /**
      * Retrieve all existing series <code>origin types</code> defined by http://wwww.bedetehque.com
@@ -45,8 +45,8 @@ public class SerieServiceImpl implements SerieService {
      * @return the list of distinct series origin types, ordered by asc
      */
     @Override
-    public List<String> getDistinctOrigins() {
-        return this.serieRepository.findDistinctOrigins();
+    public OriginsResource getDistinctOrigins() {
+        return OriginsMapper.toResource(this.serieRepository.findDistinctOrigins());
     }
 
     /**
@@ -55,8 +55,8 @@ public class SerieServiceImpl implements SerieService {
      * @return the list of distinct series status types, ordered by asc
      */
     @Override
-    public List<String> getDistinctStatus() {
-        return this.serieRepository.findDistinctStatus();
+    public StatusResource getDistinctStatus() {
+        return StatusMapper.toResource(this.serieRepository.findDistinctStatus());
     }
 
     /**
@@ -65,8 +65,8 @@ public class SerieServiceImpl implements SerieService {
      * @return the list of distinct series category types, ordered by asc
      */
     @Override
-    public List<String> getDistinctCategories() {
-        return this.serieRepository.findDistinctCategories();
+    public CategoriesResource getDistinctCategories() {
+        return CategoriesMapper.toResource(this.serieRepository.findDistinctCategories());
     }
 
     /**
@@ -75,8 +75,8 @@ public class SerieServiceImpl implements SerieService {
      * @return the list of distinct series language, ordered by asc
      */
     @Override
-    public List<String> getDistinctLanguages() {
-        return this.serieRepository.findDistinctLanguages();
+    public LanguageResource getDistinctLanguages() {
+        return LanguageMapper.toResource(this.serieRepository.findDistinctLanguages());
     }
 
     /**
@@ -96,6 +96,30 @@ public class SerieServiceImpl implements SerieService {
             throw new EntityNotFoundException(serieId, "Serie");
         }
     }
+
+    /**
+     * Retrieve a serie by id
+     *
+     * @param contextResource the context to get
+     * @param serieId the id of the serie to get
+     * @return the found serie
+     * @throws EntityNotFoundException in case ID is not found in DB.
+     */
+    @Override
+    public SerieResource getSerie(ContextResource contextResource, Long serieId) throws EntityNotFoundException {
+        // Get serie from db
+        Serie serie = this.getSerieById(serieId);
+        // Map the entity in a resource object
+        SerieResource serieResource = SerieMapper.INSTANCE.toResource(serie);
+
+        // If exists, add library info
+        List<LibrarySerieContent> librarySerieContents = this.librarySerieContentRepository.findLibrarySerie(contextResource.getLibrary().getId(), serieId);
+        if(librarySerieContents.size() > 0)
+            serieResource.setLibrarySerieContent(librarySerieContents.get(0));
+
+        return serieResource;
+    }
+
 
     /**
      * Scrap a serie from https://www.bedetheque.com
@@ -209,8 +233,13 @@ public class SerieServiceImpl implements SerieService {
      * @return the list of author's series
      */
     @Override
-    public List<AuthorRolesBySerieResource> getSeriesByAuthorRoles(Long authorId){
-        return this.serieRepository.findSeriesByAuthorRoles(authorId);
+    public List<AuthorRolesBySerieResource> getSeriesByAuthorRoles(ContextResource contextResource, Long authorId){
+        if(contextResource.getContext().equals("referential")) {
+            return this.serieRepository.findSeriesByAuthorRoles(authorId);
+        } else {
+            return this.serieRepository.findSeriesFromLibraryByAuthorRoles(contextResource.getLibrary().getId(), authorId);
+        }
+
     }
 
     /**
@@ -221,39 +250,24 @@ public class SerieServiceImpl implements SerieService {
      * @return a page of series
      */
     @Override
-    public Page<Serie> getSeriesByTitleStartingWith(ContextResource contextResource, String letter, Pageable pageable) {
+    public Page<SerieResource> getSeriesByTitleStartingWith(ContextResource contextResource, String letter, Pageable pageable) {
+        Page<Serie> series;
         if(contextResource.getContext().equals("referential")) {
-            if(letter.equals("0"))
-                return this.serieRepository.findSeriesByTitleLessThanIgnoreCase("a", pageable);
+            if(letter.equals("#"))
+                series = this.serieRepository.findSeriesByTitleLessThanIgnoreCase("a", pageable);
             else
-                return this.serieRepository.findSeriesByTitleStartingWithIgnoreCase(letter, pageable);
+                series = this.serieRepository.findSeriesByTitleStartingWithIgnoreCase(letter, pageable);
         } else {
             if(letter != null)
                 letter = letter.toLowerCase();
-            if(letter.equals("0"))
-                return this.serieRepository.findSeriesFromLibraryByTitleLessThanIgnoreCase(contextResource.getLibrary().getId(), "a", pageable);
+            if(letter.equals("#"))
+                series = this.serieRepository.findSeriesFromLibraryByTitleLessThanIgnoreCase(contextResource.getLibrary().getId(), "a", pageable);
             else
-                return this.serieRepository.findSeriesFromLibraryByTitleStartingWithIgnoreCase(contextResource.getLibrary().getId(), letter, pageable);
+                series = this.serieRepository.findSeriesFromLibraryByTitleStartingWithIgnoreCase(contextResource.getLibrary().getId(), letter, pageable);
         }
 
-    }
+        return series.map(serie -> SerieMapper.INSTANCE.toResource(serie));
 
-    /**
-     * Count series
-     * @return the count
-     */
-    @Override
-    public Long count() {
-        return this.serieRepository.count();
-    }
-
-    /**
-     * Count series by origin
-     * @return
-     */
-    @Override
-    public List<SeriesOriginCounterResource> countSeriesByOrigin(){
-        return this.serieRepository.countSeriesByOrigin();
     }
 
     /**

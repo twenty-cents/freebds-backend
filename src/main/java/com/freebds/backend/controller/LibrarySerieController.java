@@ -1,8 +1,6 @@
 package com.freebds.backend.controller;
 
-import com.freebds.backend.dto.SerieDTO;
-import com.freebds.backend.mapper.SerieMapper;
-import com.freebds.backend.model.Serie;
+import com.freebds.backend.common.web.serie.resources.SerieResource;
 import com.freebds.backend.service.LibrarySerieContentService;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
@@ -34,14 +32,14 @@ public class LibrarySerieController {
      * @return a page of series
      */
     @GetMapping("/letters")
-    public Page<SerieDTO> getAllSeries(
+    public Page<SerieResource> getAllSeries(
             @PageableDefault(size=25, page = 0, direction = Sort.Direction.ASC) Pageable pageable,
             @ApiParam(value = "Query param for 'titleStartingWith'") @Valid @RequestParam(value = "titleStartingWith", required = false) String titleStartingWith
     ){
         if(titleStartingWith == null)
             titleStartingWith = "";
-        Page<Serie> series = librarySerieContentService.getAllSeries(titleStartingWith, pageable);
-        return series.map(serie -> SerieMapper.INSTANCE.toDTO(serie));
+
+        return librarySerieContentService.getAllSeries(titleStartingWith, pageable);
     }
 
 

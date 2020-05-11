@@ -1,7 +1,6 @@
 package com.freebds.backend.mapper;
 
-import com.freebds.backend.common.web.EntityDTOMapper;
-import com.freebds.backend.dto.SerieDTO;
+import com.freebds.backend.common.web.serie.resources.SerieResource;
 import com.freebds.backend.model.Serie;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -9,7 +8,7 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring", uses = DateMapper.class)
-public interface SerieMapper extends EntityDTOMapper<Serie, SerieDTO> {
+public interface SerieMapper {
 
     SerieMapper INSTANCE = Mappers.getMapper(SerieMapper.class);
 
@@ -19,8 +18,7 @@ public interface SerieMapper extends EntityDTOMapper<Serie, SerieDTO> {
             @Mapping(target="pageThumbnailUrl", source = "serie.pageThumbnailUrl", defaultValue = ""),
             @Mapping(target="pageUrl", source = "serie.pageUrl", defaultValue = "")
     })
-    SerieDTO toDTO(Serie serie);
 
-    Serie toEntity(SerieDTO serieDTO);
+    SerieResource toResource(Serie serie);
 
 }

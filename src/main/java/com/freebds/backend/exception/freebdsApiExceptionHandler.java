@@ -1,6 +1,5 @@
 package com.freebds.backend.exception;
 
-import com.freebds.backend.dto.ApiErrorDTO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +23,9 @@ public class freebdsApiExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Object> handleEntityNotFoundException(EntityNotFoundException ex) {
-        ApiErrorDTO apiError = new ApiErrorDTO(
+        ApiErrorResource apiError = new ApiErrorResource(
                 "001",
-                "Get request with ID on Entity " + ex.getEntityName() + " returned no element",
+                "Get requests with ID on Entity " + ex.getEntityName() + " returned no element",
                 ex.getMessage());
         return new ResponseEntity<>(apiError, HttpStatus.NOT_FOUND);
     }
@@ -42,10 +41,10 @@ public class freebdsApiExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        ApiErrorDTO apiError = new ApiErrorDTO(
+        ApiErrorResource apiError = new ApiErrorResource(
                 "002",
                 "Invalid input data",
-                "The provided body request is not valid, some fields might be missing or not with a good format");
+                "The provided body requests is not valid, some fields might be missing or not with a good format");
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
@@ -57,9 +56,9 @@ public class freebdsApiExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(CollectionItemNotFoundException.class)
     public ResponseEntity<Object> handleCollectionItemNotFoundException(CollectionItemNotFoundException ex) {
-        ApiErrorDTO apiError = new ApiErrorDTO(
+        ApiErrorResource apiError = new ApiErrorResource(
                 "003",
-                "Get request with item " + ex.getItem() + " returned no element in the associated collection " + ex.getCollection(),
+                "Get requests with item " + ex.getItem() + " returned no element in the associated collection " + ex.getCollection(),
                 ex.getMessage());
         return new ResponseEntity<>(apiError, HttpStatus.NOT_FOUND);
     }
@@ -72,7 +71,7 @@ public class freebdsApiExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(FreeBdsApiException.class)
     public ResponseEntity<Object> handleFreeBdsApiException(FreeBdsApiException ex) {
-        ApiErrorDTO apiError = new ApiErrorDTO(
+        ApiErrorResource apiError = new ApiErrorResource(
                 "004",
                 ex.getApiMessage(),
                 ex.getErrorMessage());

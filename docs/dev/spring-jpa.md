@@ -4,6 +4,7 @@
 - Thoughts on java : https://thoughts-on-java.org/hibernate-tip-many-to-many-association-with-additional-attributes/
 - Intégration dans docker : https://hellokoding.com/jpa-many-to-many-extra-columns-relationship-mapping-example-with-spring-boot-maven-and-mysql/
 - 5 Primary Key Mappings for JPA and Hibernate Every Developer Should Know : https://thoughts-on-java.org/primary-key-mappings-jpa-hibernate/
+- Composite Primary Keys in JPA : https://www.baeldung.com/jpa-composite-primary-keys
 
 ## Queries
 - JPA Query methods : https://docs.spring.io/spring-data/jpa/docs/2.2.5.RELEASE/reference/html/#jpa.query-methods

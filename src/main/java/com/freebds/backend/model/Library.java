@@ -35,6 +35,6 @@ public class Library {
     private Set<User> users = new HashSet<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "library", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "library", orphanRemoval = true)
     private List<LibraryContent> libraryContents;
 }

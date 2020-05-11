@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
+import java.util.List;
 
 @Repository
 public interface LibrarySerieContentRepository extends JpaRepository<LibrarySerieContent, Long> {
@@ -20,10 +21,11 @@ public interface LibrarySerieContentRepository extends JpaRepository<LibrarySeri
      * @param libraryId : the library's id to check
      * @return : the count of series found (should always be one if everything is ok)
      */
-    @Query("SELECT COUNT(s) FROM LibrarySerieContent s WHERE s.id = :serieId AND s.library.id = :libraryId")
+    @Query("SELECT COUNT(s) FROM LibrarySerieContent s WHERE s.serie.id = :serieId AND s.library.id = :libraryId")
     Long checkIfExist(@Param("serieId") Long serieId, @Param("libraryId") Long libraryId);
 
-    LibrarySerieContent findFirstBySerieId(Long serieId);
+    @Query("SELECT ls FROM LibrarySerieContent ls WHERE ls.library.id = :libraryId AND ls.serie.id = :serieId")
+    List<LibrarySerieContent> findLibrarySerie(@Param("libraryId") Long libraryId, @Param("serieId") Long serieId);
 
     /**
      * Find series within a library
@@ -44,7 +46,7 @@ public interface LibrarySerieContentRepository extends JpaRepository<LibrarySeri
                     "WHERE ls.library.id = :libraryId " +
                     "  AND (s.title IS NULL OR LOWER(s.title) LIKE :titleStartingWith%) "
     )
-    Page<Serie> findAllSeriesGag(@Param("libraryId") Long libraryId, @Param("titleStartingWith") String titleStartingWith, Pageable pageable);
+    Page<Serie> findAllSeries(@Param("libraryId") Long libraryId, @Param("titleStartingWith") String titleStartingWith, Pageable pageable);
 
     /**
      * Retrieve all existing authors by multiple criteria

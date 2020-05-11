@@ -1,8 +1,9 @@
 package com.freebds.backend.repository;
 
-import com.freebds.backend.common.web.resources.AuthorRolesBySerieResource;
-import com.freebds.backend.common.web.resources.SeriesOriginCounterResource;
-import com.freebds.backend.common.web.resources.SeriesStatusCounterResource;
+import com.freebds.backend.common.web.dashboard.resources.PeriodicityCountResource;
+import com.freebds.backend.common.web.serie.resources.AuthorRolesBySerieResource;
+import com.freebds.backend.common.web.dashboard.resources.SeriesOriginCounterResource;
+import com.freebds.backend.common.web.dashboard.resources.SeriesStatusCounterResource;
 import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.model.GraphicNovel;
 import com.freebds.backend.model.Serie;
@@ -193,6 +194,7 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
             "WHERE ga.role IN ('Scénario', 'Dessin', 'Couleurs') " +
             "ORDER BY s.title "
     )
+    @Deprecated
     List<Serie> findMainSeriesByAuthor(@Param("authorId") Long authorId);
 
     /**
@@ -224,6 +226,36 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
     )
     List<AuthorRolesBySerieResource> findSeriesByAuthorRoles(@Param("authorId") Long authorId);
 
+    /**
+     * Find all series by author's roles (from library)
+     * @param authorId the author id to get
+     * @return the list of author's series
+     */
+    @Query(
+            value =
+                    "select distinct rq1.id, rq1.title, rq1.role, rq1.publicationDateFrom, rq2.publicationDateTo from " +
+                            "( " +
+                            "        select distinct s.id, s.title, ga.role as role, min(g.publication_date) as publicationDateFrom FROM graphicnovel g " +
+                            "        JOIN serie s ON s.id = g.serie_id " +
+                            "        JOIN graphicNovel_author ga ON ga.graphicNovel_id = g.id " +
+                            "        JOIN author a ON a.id = ga.author_id and a.id = :authorId " +
+                            "        JOIN library_content lc ON g.id = lc.graphicnovel_id AND lc.library_id = :libraryId " +
+                            "        GROUP BY 1, 2, 3 " +
+                            ") rq1 " +
+                            "inner join " +
+                            "        ( " +
+                            "                SELECT distinct s.id, s.title, ga.role as role, max(g.publication_date) as publicationDateTo FROM graphicnovel g " +
+                            "                JOIN serie s ON s.id = g.serie_id " +
+                            "                JOIN graphicNovel_author ga ON ga.graphicNovel_id = g.id " +
+                            "                JOIN author a ON a.id = ga.author_id and a.id = :authorId " +
+                            "                JOIN library_content lc ON g.id = lc.graphicnovel_id AND lc.library_id = :libraryId " +
+                            "                GROUP BY 1, 2, 3 " +
+                            "        ) rq2 " +
+                            "on rq1.id = rq2.id and rq1.title = rq2.title and rq1.role = rq2.role " +
+                            "order by rq1.title, rq1.role "
+            , nativeQuery = true
+    )
+    List<AuthorRolesBySerieResource> findSeriesFromLibraryByAuthorRoles(@Param("libraryId") Long libraryId, @Param("authorId") Long authorId);
 
     /**
      * Find all series starting with the given letter
@@ -247,7 +279,7 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
      * @return
      */
     @Query(
-            value = "SELECT s.origin AS origin, COUNT(*) as count FROM Serie s GROUP BY s.origin ORDER BY 2",
+            value = "SELECT s.origin AS name, COUNT(*) as y FROM Serie s GROUP BY s.origin ORDER BY 2",
             nativeQuery = true
     )
     List<SeriesOriginCounterResource> countSeriesByOrigin();
@@ -267,6 +299,7 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
     @Query("SELECT g FROM GraphicNovel g WHERE " +
             "  g.publicationDate BETWEEN :publicationDateFrom AND :publicationDateTo"
     )
+    @Deprecated
     Page<GraphicNovel> findByPublicationDates(
             Pageable pageable,
             @Param("publicationDateFrom") Date publicationDateFrom,
@@ -313,5 +346,27 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
                             "  AND (s.title IS NULL OR LOWER(s.title) < :titleStartingWith) "
     )
     Page<Serie> findSeriesFromLibraryByTitleLessThanIgnoreCase(@Param("libraryId") Long libraryId, @Param("titleStartingWith") String titleStartingWith, Pageable pageable);
+
+    @Query(
+            value = "select " +
+                    "  to_char(g.publication_date, 'yyyy-MM') as periodicity, " +
+                    "  count(distinct g.serie_id) as count " +
+                    "from graphicnovel g " +
+                    "where " +
+                    "  g.publication_date > date_trunc('month', current_date - interval '13' month) " +
+                    "  and g.publication_date <= date_trunc('month', current_date - interval '1' month) " +
+                    "group by 1 " +
+                    "union " +
+                    "select " +
+                    "  '0001-01' as periodicity, " +
+                    "  count(distinct g.serie_id) as count " +
+                    "from graphicnovel g " +
+                    "where " +
+                    "  g.publication_date <= date_trunc('month', current_date - interval '13' month) " +
+                    "group by 1 " +
+                    "order by 1 asc",
+            nativeQuery = true
+    )
+    List<PeriodicityCountResource> countPublicationsByMonth();
 
 }

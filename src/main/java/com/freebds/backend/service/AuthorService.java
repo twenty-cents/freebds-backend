@@ -1,7 +1,8 @@
 package com.freebds.backend.service;
 
 import com.freebds.backend.business.scrapers.GenericAuthorUrl;
-import com.freebds.backend.common.web.resources.ContextResource;
+import com.freebds.backend.common.web.author.resources.AuthorResource;
+import com.freebds.backend.common.web.context.resources.ContextResource;
 import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.model.Author;
 import com.freebds.backend.model.GraphicNovel;
@@ -17,7 +18,7 @@ public interface AuthorService {
 
     Author getAuthorById(Long id);
 
-    Page getAuthors(Pageable page);
+    Page<AuthorResource> getAuthors(Pageable page);
 
     Page<GraphicNovel> getGraphicNovelsByAuthorId(Pageable page, Long authorId);
 
@@ -43,12 +44,6 @@ public interface AuthorService {
      * @param pageable the page to get
      * @return a page of authors
      */
-    Page<Author> getAuthorsByLastnameStartingWith(ContextResource contextResource, String letter, Pageable pageable);
-
-    /**
-     * Count authors
-     * @return the count
-     */
-    Long count();
+    Page<AuthorResource> getAuthorsByLastnameStartingWith(ContextResource contextResource, String letter, Pageable pageable);
 
 }

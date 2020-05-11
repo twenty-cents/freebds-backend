@@ -1,6 +1,9 @@
 package com.freebds.backend.repository;
 
-import com.freebds.backend.common.web.resources.AuthorRoleResource;
+import com.freebds.backend.common.web.dashboard.resources.PeriodicityCountResource;
+import com.freebds.backend.common.web.dashboard.resources.PublicationsByMonthGroupByOriginResource;
+import com.freebds.backend.common.web.author.resources.AuthorRoleResource;
+import com.freebds.backend.common.web.graphicNovel.resources.GraphicNovelMinimumResource;
 import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.model.GraphicNovel;
 import com.freebds.backend.model.Serie;
@@ -37,15 +40,6 @@ public interface GraphicNovelRepository extends JpaRepository<GraphicNovel, Long
      * @throws EntityNotFoundException in case external id is not found in DB.
      */
     List<GraphicNovel> findGraphicNovelsByExternalId(String externalId);
-
-    /**
-     * Save and commit a graphic novel into the db
-     *
-     * param graphicNovel the graphic novel to save
-     * return the graphic novel saved
-
-    GraphicNovel saveAndFlush(GraphicNovel graphicNovel);
-     */
 
     /**
      *
@@ -189,4 +183,79 @@ public interface GraphicNovelRepository extends JpaRepository<GraphicNovel, Long
                     "WHERE lg.library.id = :libraryId AND g.serie.id = :serieId"
     )
     Page<GraphicNovel> findGraphicNovelsFromLibraryBySerie(@Param("libraryId") Long libraryId, @Param("serieId") Long serieId, Pageable pageable);
+
+    /**
+     * Find missing graphic novels by serie from a library
+     * @param libraryId
+     * @param serieId
+     * @return
+     */
+    @Query("SELECT " +
+            "  g.id as id," +
+            "  g.tome as tome," +
+            "  g.numEdition as numEdition," +
+            "  g.title as title," +
+            "  g.publicationDate as publicationDate " +
+            "FROM GraphicNovel g " +
+            "WHERE g.serie.id = :serieId " +
+            "  AND g.id NOT IN ( " +
+            "    SELECT lc.graphicNovel.id FROM LibraryContent lc " +
+            "    WHERE lc.library.id = :libraryId ) " +
+            "ORDER BY g.publicationDate")
+    List<GraphicNovelMinimumResource> findMissingGraphicNovelsFromLibraryBySerie(@Param("libraryId") Long libraryId, @Param("serieId") Long serieId);
+
+    /**
+     * Find some graphic novels by a ISBN
+     * @param isbn
+     * @return
+     */
+    @Query("SELECT g FROM GraphicNovel g WHERE g.isbn = :isbn ORDER BY g.serie.id, g.tome, g.numEdition")
+    List<GraphicNovel> findGraphicNovelsByISBN(@Param("isbn") String isbn);
+
+    /**
+     * Find publications count by origin by month
+     * @return the statistics result resource
+     */
+    @Query(
+            value = "SELECT " +
+                    "  to_char(g.publication_date, 'yyyy-MM') as month, " +
+                    "  s.origin as origin, " +
+                    "  count(*) as count " +
+                    "FROM graphicnovel g " +
+                    "INNER JOIN serie s ON g.serie_id = s.id " +
+                    "WHERE " +
+                    "  g.publication_date > :dateFrom  " +
+                    "  AND g.publication_date <= :dateTo  " +
+                    "GROUP BY 1, 2 " +
+                    "ORDER BY 1 ASC, 2 ",
+            nativeQuery = true)
+    List<PublicationsByMonthGroupByOriginResource> findPublicationsByMonthGroupByOrigin(@Param("dateFrom") Date dateFrom, @Param("dateTo") Date dateTo);
+
+
+    /**
+     * Find publications growth by month
+     * @return the statistics result resource
+     */
+    @Query(
+            value = "select " +
+                    "  to_char(g.publication_date, 'yyyy-MM') as periodicity, " +
+                    "  count(*) as count " +
+                    "from graphicnovel g " +
+                    "where\n" +
+                    "  g.publication_date > :dateFrom  " +
+                    "  and g.publication_date <= :dateTo " +
+                    "group by 1  " +
+                    "union " +
+                    "select " +
+                    "  '0001-01' as periodicity, " +
+                    "  count(*) as count " +
+                    "from graphicnovel g " +
+                    "where\n" +
+                    "  g.publication_date <= :dateTo " +
+                    "group by 1 " +
+                    "order by 1 asc",
+            nativeQuery = true
+    )
+    List<PeriodicityCountResource> countPublicationsByMonth(@Param("dateFrom") Date dateFrom, @Param("dateTo") Date dateTo);
+
 }

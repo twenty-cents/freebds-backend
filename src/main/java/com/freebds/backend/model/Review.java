@@ -1,8 +1,10 @@
 package com.freebds.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "review")
@@ -10,8 +12,9 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"id"})
-@ToString
+@Builder
+//@EqualsAndHashCode(exclude = {"librarySerieContent, libraryContent, user"})
+@ToString(exclude = {"librarySerieContent, libraryContent, user"})
 public class Review {
 
     @Id
@@ -26,11 +29,24 @@ public class Review {
     @Column(name = "comment")
     private String comment;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "library_serie_content_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "library_serie_content_id"))
     private LibrarySerieContent librarySerieContent;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "library_content_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "library_content_id"))
     private LibraryContent libraryContent;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "user_id"))
+    private User user;
+
+    @Column(name = "last_update_date")
+    private LocalDateTime lastUpdateDate;
+
+    @Column(name = "last_update_user")
+    private String lastUpdateUser;
 }

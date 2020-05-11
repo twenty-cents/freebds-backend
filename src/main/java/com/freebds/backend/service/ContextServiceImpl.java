@@ -1,6 +1,6 @@
 package com.freebds.backend.service;
 
-import com.freebds.backend.common.web.resources.ContextResource;
+import com.freebds.backend.common.web.context.resources.ContextResource;
 import com.freebds.backend.exception.FreeBdsApiException;
 import com.freebds.backend.model.User;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +18,23 @@ public class ContextServiceImpl implements ContextService {
     private final LibraryService libraryService;
 
     /**
+     * Get current user
+     * @return the current user
+     */
+    @Override
+    public User getContext() {
+        // Retrieve current user
+        String username ="";
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails)principal).getUsername();
+        } else {
+            username = principal.toString();
+        }
+        return this.userService.getByUsername(username);
+    }
+
+    /**
      * Get the context for a role
      * @param contextRequest : the context to get
      * @param roleRequest : the role to check
@@ -27,14 +44,7 @@ public class ContextServiceImpl implements ContextService {
     @Override
     public ContextResource getContext(String contextRequest, Long libraryId, String roleRequest) {
         // Retrieve current user
-        String username ="";
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            username = ((UserDetails)principal).getUsername();
-        } else {
-            username = principal.toString();
-        }
-        User user = this.userService.getByUsername(username);
+        User user = getContext();
 
         // Check context
         String authorizedContext = "undefined";
@@ -60,7 +70,7 @@ public class ContextServiceImpl implements ContextService {
         if(! isRoleRequestValid){
             throw new FreeBdsApiException(
                    "Habilitation insuffisante pour l'action demandée.",
-                   "Invalid credentials for request user / library / role " + user.getId() + " / " + libraryId + " / " + roleRequest
+                   "Invalid credentials for requests user / library / role " + user.getId() + " / " + libraryId + " / " + roleRequest
             );
         }
 
