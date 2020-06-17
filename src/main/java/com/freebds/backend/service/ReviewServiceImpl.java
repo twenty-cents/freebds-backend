@@ -1,9 +1,9 @@
 package com.freebds.backend.service;
 
+import com.freebds.backend.common.web.context.resources.ContextResource;
 import com.freebds.backend.common.web.graphicNovel.requests.Rating;
 import com.freebds.backend.common.web.graphicNovel.requests.SetReviewRequest;
 import com.freebds.backend.common.web.graphicNovel.resources.ReviewResource;
-import com.freebds.backend.common.web.context.resources.ContextResource;
 import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.exception.FreeBdsApiException;
 import com.freebds.backend.model.LibraryContent;
@@ -25,6 +25,16 @@ import java.util.Optional;
 @Service
 public class ReviewServiceImpl implements ReviewService {
 
+    /*
+    @Autowired
+    private LibraryContentRepository libraryContentRepository;
+    @Autowired
+    private LibrarySerieContentRepository librarySerieContentRepository;
+    @Autowired
+    private ReviewRepository reviewRepository;
+    */
+    /**
+     */
     private final LibraryContentRepository libraryContentRepository;
     private final LibrarySerieContentRepository librarySerieContentRepository;
     private final ReviewRepository reviewRepository;

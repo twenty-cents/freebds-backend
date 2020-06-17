@@ -55,4 +55,14 @@ public interface UserLibraryRepository extends JpaRepository<UserLibrary, Long> 
             "ORDER BY 3, 2 ",
             nativeQuery = true)
     List<IUserLibraryStatusResource> findUsersStatusOnPersonalLibrary(@Param("userId") Long userId, @Param("libraryId") Long libraryId);
+
+    @Query("SELECT " +
+            "l.id as libraryId, " +
+            "l.name as name, " +
+            "l.description as description, " +
+            "u.role as userRole, " +
+            "u.isActive as isActive " +
+            "FROM UserLibrary u JOIN Library l ON u.library.id = l.id " +
+            "WHERE u.user.id = :userId AND u.isActive = true ")
+    List<ILibraryResource> findActiveLibrary(@Param("userId") Long userId);
 }

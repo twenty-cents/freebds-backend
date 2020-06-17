@@ -3,14 +3,22 @@ package com.freebds.backend.service;
 import com.freebds.backend.common.web.author.resources.AuthorResource;
 import com.freebds.backend.model.Author;
 import com.freebds.backend.repository.AuthorRepository;
+import com.freebds.backend.repository.SerieRepository;
+import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,14 +30,56 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
+@RunWith(SpringRunner.class)
 class AuthorServiceImplTest {
+
+    @TestConfiguration
+    static class EmployeeServiceImplTestContextConfiguration {
+
+        @Mock
+        private AuthorRepository authorRepository;
+
+        @Mock
+        private SerieRepository serieRepository;
+
+        @Mock
+        private LibraryService libraryService;
+
+        @Bean
+        public AuthorService authorService() {
+            return new AuthorServiceImpl(authorRepository, serieRepository, libraryService);
+        }
+    }
+
 
     @Autowired
     private AuthorService authorService;
 
-    @Mock
+    @MockBean
     private AuthorRepository authorRepository;
 
+
+
+    @Before
+    public void setUp() {
+
+    }
+
+    @Test
+    void getAuthorById_thenAuthorShouldBeFound() {
+        // Given
+        Author expectedAuthor = new Author();
+        expectedAuthor.setId(1L);
+        Optional<Author> OpExpectedAuthor = Optional.of(expectedAuthor);
+
+        Mockito.when(authorRepository.findById(expectedAuthor.getId()))
+                .thenReturn(OpExpectedAuthor);
+
+        Author found = authorService.getAuthorById(1L);
+
+        assertThat(found.getId())
+                .isEqualTo(expectedAuthor.getId());
+    }
 
     @Test
     void getAuthorById() {

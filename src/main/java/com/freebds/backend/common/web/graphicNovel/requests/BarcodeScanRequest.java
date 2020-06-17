@@ -1,5 +1,14 @@
 package com.freebds.backend.common.web.graphicNovel.requests;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
 public class BarcodeScanRequest {
 
     private Long libraryId;

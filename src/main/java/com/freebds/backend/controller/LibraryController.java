@@ -37,6 +37,19 @@ public class LibraryController {
         return this.libraryService.getUserLibrary(user);
     }
 
+
+    /**
+     * Get active library associated to a user
+     * @return the active library
+     */
+    @GetMapping("/active")
+    public ILibraryResource getActiveLibrary() {
+        // Get context
+        User user = this.contextService.getContext();
+
+        return this.libraryService.getActiveLibrary(user);
+    }
+
     /**
      * Set the active library associated to a user
      * @param libraryId the library to activate

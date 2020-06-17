@@ -206,10 +206,13 @@ public interface GraphicNovelRepository extends JpaRepository<GraphicNovel, Long
 
     /**
      * Find some graphic novels by a ISBN
-     * @param isbn
-     * @return
+     * @param isbn barcode to find
+     * @return a list of graphic novels
      */
-    @Query("SELECT g FROM GraphicNovel g WHERE g.isbn = :isbn ORDER BY g.serie.id, g.tome, g.numEdition")
+    @Query(value = "SELECT * FROM graphicnovel g " +
+                     " WHERE REPLACE(g.isbn, '-', '') = :isbn " +
+                     " ORDER BY g.serie_id, g.tome, g.num_edition",
+    nativeQuery = true)
     List<GraphicNovel> findGraphicNovelsByISBN(@Param("isbn") String isbn);
 
     /**

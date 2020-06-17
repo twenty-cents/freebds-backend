@@ -98,7 +98,7 @@ public class GraphicNovelController {
     @PostMapping("/scan")
     public List<GraphicNovelResource> scan (@RequestBody BarcodeScanRequest barcodeScanRequest) {
         // Get context (throw an exception if incorrect)
-        ContextResource contextResource = this.contextService.getContext("library", barcodeScanRequest.getLibraryId(), "ADMIN");
+        ContextResource contextResource = this.contextService.getContext("library", barcodeScanRequest.getLibraryId(), "USER");
 
         return this.graphicNovelService.scan(contextResource, barcodeScanRequest);
     }

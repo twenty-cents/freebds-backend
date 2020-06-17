@@ -20,6 +20,8 @@ public interface LibraryService {
 
     List<ILibraryResource> getLibraries(User user);
 
+    ILibraryResource getActiveLibrary(User user);
+
     List<IUserLibraryStatusResource> getUsersStatusOnPersonalLibrary(User user);
 
     UserLibraryStatusResource dissociateUserStatusOnPersonalLibrary(User user, UserLibraryStatusRequest userLibraryStatusRequest);

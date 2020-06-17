@@ -5,10 +5,10 @@ import com.freebds.backend.common.web.payload.requests.LoginRequest;
 import com.freebds.backend.common.web.payload.requests.SignupRequest;
 import com.freebds.backend.common.web.payload.resources.JwtResponse;
 import com.freebds.backend.common.web.payload.resources.MessageResponse;
-import com.freebds.backend.model.ERole;
-import com.freebds.backend.model.Role;
-import com.freebds.backend.model.User;
+import com.freebds.backend.model.*;
+import com.freebds.backend.repository.LibraryRepository;
 import com.freebds.backend.repository.RoleRepository;
+import com.freebds.backend.repository.UserLibraryRepository;
 import com.freebds.backend.repository.UserRepository;
 import com.freebds.backend.security.jwt.JwtUtils;
 import com.freebds.backend.security.services.UserDetailsImpl;
@@ -39,6 +39,12 @@ public class AuthController {
 
     @Autowired
     RoleRepository roleRepository;
+
+    @Autowired
+    LibraryRepository libraryRepository;
+
+    @Autowired
+    UserLibraryRepository userLibraryRepository;
 
     @Autowired
     PasswordEncoder encoder;
@@ -120,7 +126,24 @@ public class AuthController {
         }
 
         user.setRoles(roles);
-        userRepository.save(user);
+        user.setFirstname(signUpRequest.getFirstname());
+        user.setLastname(signUpRequest.getLastname());
+        user = userRepository.save(user);
+
+        // Create private library
+        Library library = new Library();
+        library.setName("Collection de " + user.getFirstname());
+        library.setDescription("Collection de " + user.getFirstname());
+        library = libraryRepository.save(library);
+
+        // Associate private library to user
+        UserLibrary userLibrary = new UserLibrary();
+        userLibrary.setId(new UserLibraryId(user.getId(), library.getId(), "ADMIN"));
+        userLibrary.setUser(user);
+        userLibrary.setLibrary(library);
+        userLibrary.setRole("ADMIN");
+        userLibrary.setActive(true);
+        userLibrary = userLibraryRepository.saveAndFlush(userLibrary);
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }

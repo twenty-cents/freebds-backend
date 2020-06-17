@@ -84,6 +84,8 @@ public class UserServiceImpl implements UserService {
 
         // Save updated user
         user.setAvatar(profileUpdateRequest.getAvatar());
+        user.setFirstname(profileUpdateRequest.getFirstname());
+        user.setLastname(profileUpdateRequest.getLastname());
         user = this.userRepository.saveAndFlush(user);
 
         ProfileUpdateResponse profileUpdateResponse = new ProfileUpdateResponse().builder()

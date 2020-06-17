@@ -1,10 +1,9 @@
 package com.freebds.backend.controller;
 
-import com.freebds.backend.common.web.freeSearch.resources.FreeSearchResource;
 import com.freebds.backend.common.web.context.resources.ContextResource;
+import com.freebds.backend.common.web.freeSearch.resources.FreeSearchResource;
 import com.freebds.backend.service.ContextService;
 import com.freebds.backend.service.FreeSearchService;
-import com.freebds.backend.service.GraphicNovelService;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +24,6 @@ public class FreeSearchController {
 
     private final ContextService contextService;
     private final FreeSearchService freeSearchService;
-    private final GraphicNovelService graphicNovelService;
 
     /**
      * Retrieve all existing series / graphic novels / authors by multiple criteria

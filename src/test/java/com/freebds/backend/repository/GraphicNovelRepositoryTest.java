@@ -7,6 +7,7 @@ import com.freebds.backend.common.web.graphicNovel.resources.GraphicNovelMinimum
 import com.freebds.backend.model.Author;
 import com.freebds.backend.model.GraphicNovel;
 import com.freebds.backend.model.Serie;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,10 +117,15 @@ class GraphicNovelRepositoryTest {
         assertThat(serieMinimumResources.size()).isGreaterThan(0);
     }
 
+    @DisplayName("Find a graphic novel by a ISBN/EAN13 code")
     @Test
     public void findGraphicNovelsByISBN() {
-        List<GraphicNovel> graphicNovels = this.graphicNovelRepository.findGraphicNovelsByISBN("978-2-86497-011-8");
+        // Find a graphic novel with the repository
+        List<GraphicNovel> graphicNovels = this.graphicNovelRepository.findGraphicNovelsByISBN("9782864970118");
+        // Test if the returned graphic novels list is not empty
         assertThat(graphicNovels.size()).isGreaterThan(0);
+        // Test if the first returned graphic novel has the wanted ISBN/EAN13
+        assertThat(graphicNovels.get(0).getIsbn()).isEqualTo("9782864970118");
     }
 
     @Test

@@ -125,6 +125,21 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     /**
+     * Get active library associated to a user
+     * @param user the user to get
+     * @return the active library
+     */
+    @Override
+    public ILibraryResource getActiveLibrary(User user) throws FreeBdsApiException {
+        List<ILibraryResource> iLibraryResources = this.userLibraryRepository.findActiveLibrary((user.getId()));
+        if(iLibraryResources.size() != 1) {
+            throw new FreeBdsApiException("Active library detection problem", "");
+        }
+        return iLibraryResources.get(0);
+    }
+
+
+    /**
      * Get users status on the personal library
      * @param user the user
      * @return

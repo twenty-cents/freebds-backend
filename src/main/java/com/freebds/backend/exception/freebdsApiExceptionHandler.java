@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.validation.ConstraintViolationException;
+
 /**
  * Specific Exception Handler for API Rest Controllers
  */
@@ -75,6 +77,16 @@ public class freebdsApiExceptionHandler extends ResponseEntityExceptionHandler {
                 "004",
                 ex.getApiMessage(),
                 ex.getErrorMessage());
+        return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
+    }
+
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Object> handleConstraintViolationException(ConstraintViolationException ex) {
+        ApiErrorResource apiError = new ApiErrorResource(
+                "005",
+                "Paramètres de la requête XHR invalides",
+                ex.getMessage());
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 

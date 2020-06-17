@@ -12,6 +12,7 @@ import java.util.Set;
 @Table(name = "library")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Getter
 @Setter
 @EqualsAndHashCode(of= {"id"})

@@ -43,13 +43,7 @@ public interface GraphicNovelService {
 
     GraphicNovel scrap(Serie serie, ScrapedGraphicNovel scrapedGraphicNovel);
 
-    /**
-     * Find all graphic novels from a serie within a library
-     * @param serieId the id serie to get
-     * @param pageable : the page to get
-     * @return a page of graphic novels
-     */
-    Page<GraphicNovel> getGraphicNovelsFromLibraryBySerie(Long serieId, Pageable pageable);
+//    Page<GraphicNovel> getGraphicNovelsFromLibraryBySerie(Long serieId, Pageable pageable);
 
     List<GraphicNovelMinimumResource> getMissingGraphicNovelsFromLibraryBySerie(ContextResource contextResource, Long serieId);
 

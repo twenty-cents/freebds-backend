@@ -2,15 +2,14 @@ package com.freebds.backend.service;
 
 import com.freebds.backend.business.scrapers.bedetheque.dto.ScrapedGraphicNovel;
 import com.freebds.backend.common.utility.BarcodeImageDecoder;
+import com.freebds.backend.common.web.context.resources.ContextResource;
 import com.freebds.backend.common.web.graphicNovel.requests.BarcodeScanRequest;
 import com.freebds.backend.common.web.graphicNovel.resources.GraphicNovelMinimumResource;
 import com.freebds.backend.common.web.graphicNovel.resources.GraphicNovelResource;
-import com.freebds.backend.common.web.context.resources.ContextResource;
 import com.freebds.backend.exception.EntityNotFoundException;
 import com.freebds.backend.exception.FreeBdsApiException;
 import com.freebds.backend.mapper.GraphicNovelMapper;
 import com.freebds.backend.model.GraphicNovel;
-import com.freebds.backend.model.Library;
 import com.freebds.backend.model.LibraryContent;
 import com.freebds.backend.model.Serie;
 import com.freebds.backend.repository.GraphicNovelRepository;
@@ -19,15 +18,10 @@ import com.freebds.backend.repository.ReviewRepository;
 import com.freebds.backend.repository.SerieRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -42,7 +36,7 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
 
     private final GraphicNovelRepository graphicNovelRepository;
     private final SerieRepository serieRepository;
-    private final LibraryService libraryService;
+//    private final LibraryService libraryService;
     private final LibraryContentRepository libraryContentRepository;
     private final ReviewRepository reviewRepository;
 
@@ -249,18 +243,18 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
         return graphicNovelRepository.saveAndFlush(gc);
     }
 
-    /**
-     * Find all graphic novels from a serie within a library
-     * @param serieId the id serie to get
-     * @param pageable : the page to get
-     * @return a page of graphic novels
-     */
-    @Override
-    public Page<GraphicNovel> getGraphicNovelsFromLibraryBySerie(Long serieId, Pageable pageable) {
-        Library library = this.libraryService.getCurrentLibrary();
-
-        return this.graphicNovelRepository.findGraphicNovelsFromLibraryBySerie(library.getId(), serieId, pageable);
-    }
+//    /**
+//     * Find all graphic novels from a serie within a library
+//     * @param serieId the id serie to get
+//     * @param pageable : the page to get
+//     * @return a page of graphic novels
+//     */
+//    @Override
+//    public Page<GraphicNovel> getGraphicNovelsFromLibraryBySerie(Long serieId, Pageable pageable) {
+//        Library library = this.libraryService.getCurrentLibrary();
+//
+//        return this.graphicNovelRepository.findGraphicNovelsFromLibraryBySerie(library.getId(), serieId, pageable);
+//    }
 
     /**
      * Add a graphic novel in the current user collection
@@ -278,39 +272,32 @@ public class GraphicNovelServiceImpl implements GraphicNovelService {
      * @param contextResource the context
      * @param barcodeScanRequest the barcode to scan
      * @return a list of associate graphic novels
+     * https://stackoverflow.com/questions/19874557/read-barcode-from-an-image-in-java
+     * https://stackoverflow.com/questions/10583622/com-google-zxing-notfoundexception-exception-comes-when-core-java-program-execut
      */
     @Override
     public List<GraphicNovelResource> scan(ContextResource contextResource, BarcodeScanRequest barcodeScanRequest) throws FreeBdsApiException {
-
+        log.info(barcodeScanRequest.getBarcode());
         // Decode base64 image
         byte[] decodedBytes = Base64.getDecoder().decode(barcodeScanRequest.getBarcode());
         String barcodeFormat = "";
         String barcodeValue = "";
         try {
-            FileUtils.writeByteArrayToFile(new File("c://home/ean13-webcam.jpg"), decodedBytes);
-            InputStream inputstream = new FileInputStream("c://home/ean13-webcam.jpg");
+            // Decode the barcode into the image
             BarcodeImageDecoder barcodeImageDecoder = new BarcodeImageDecoder();
-            // https://stackoverflow.com/questions/19874557/read-barcode-from-an-image-in-java
-            // https://stackoverflow.com/questions/10583622/com-google-zxing-notfoundexception-exception-comes-when-core-java-program-execut
-            BarcodeImageDecoder.BarcodeInfo barcodeInfo = barcodeImageDecoder.decodeImage(inputstream);
+            BarcodeImageDecoder.BarcodeInfo barcodeInfo = barcodeImageDecoder.decodeImage(decodedBytes);
             barcodeFormat = barcodeInfo.getFormat().trim();
             barcodeValue = barcodeInfo.getText().trim();
-        } catch ( IOException e1 ) {
-            throw new FreeBdsApiException("Erreur I/O", "");
         } catch ( BarcodeImageDecoder.BarcodeDecodingException e2) {
-            throw new FreeBdsApiException("Erreur de reconnaissance du CB", "");
+            throw new FreeBdsApiException("Aucun code-barre n'a pu être extrait de l'image.", "");
+        } catch ( NullPointerException e3 ) {
+            throw new FreeBdsApiException("Aucune image reçue.", "");
         }
-
-        // Code-barre EAN13
-        String barcode = "";
-        if(barcodeValue.length() == 13) {
-            barcode = barcodeValue.substring(0,3) + "-" + barcodeValue.substring(3,4) + "-"
-                    + barcodeValue.substring(4,9) + "-" + barcodeValue.substring(9,12) + "-"
-                    + barcodeValue.substring(12,13);
-            System.out.println(barcode);
+        // Get associated graphic novels
+        List<GraphicNovel> graphicNovels = this.graphicNovelRepository.findGraphicNovelsByISBN(barcodeValue);
+        if(graphicNovels.size() == 0) {
+            throw new FreeBdsApiException("Aucune correspondance pour le code-barre " + barcodeValue + " dans l'encyclopédie BD." , "");
         }
-
-        List<GraphicNovel> graphicNovels = this.graphicNovelRepository.findGraphicNovelsByISBN(barcode);
         // Add library infos
         return graphicNovels.stream().map(graphicNovel -> addGraphicNovelResourceDependencies(contextResource, graphicNovel)).collect(Collectors.toList());
     }

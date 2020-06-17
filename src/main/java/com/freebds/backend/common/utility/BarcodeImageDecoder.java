@@ -9,6 +9,7 @@ import com.google.zxing.common.HybridBinarizer;
 import lombok.Getter;
 
 import javax.imageio.ImageIO;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,6 +29,30 @@ public class BarcodeImageDecoder {
             throw new BarcodeDecodingException(e);
         }
     }
+
+    /**
+     * Decode a barcode from a image
+     * @param decodedBytes the image to decode
+     * @return the barcode
+     * @throws BarcodeDecodingException
+     * byte[] to Image convert :
+     * https://stackoverflow.com/questions/23979842/convert-base64-string-to-image
+     */
+    public BarcodeInfo decodeImage(byte[] decodedBytes) throws BarcodeDecodingException {
+        try {
+            BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(
+                    new BufferedImageLuminanceSource(ImageIO.read(new ByteArrayInputStream(decodedBytes)))));
+            if (bitmap.getWidth() < bitmap.getHeight()) {
+                if (bitmap.isRotateSupported()) {
+                    bitmap = bitmap.rotateCounterClockwise();
+                }
+            }
+            return decode(bitmap);
+        } catch (IOException e) {
+            throw new BarcodeDecodingException(e);
+        }
+    }
+
 
     private BarcodeInfo decode(BinaryBitmap bitmap) throws BarcodeDecodingException {
         Reader reader = new MultiFormatReader();
