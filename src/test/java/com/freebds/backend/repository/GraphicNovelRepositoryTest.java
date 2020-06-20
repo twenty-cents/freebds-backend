@@ -125,7 +125,7 @@ class GraphicNovelRepositoryTest {
         // Test if the returned graphic novels list is not empty
         assertThat(graphicNovels.size()).isGreaterThan(0);
         // Test if the first returned graphic novel has the wanted ISBN/EAN13
-        assertThat(graphicNovels.get(0).getIsbn()).isEqualTo("9782864970118");
+        assertThat(graphicNovels.get(0).getIsbn()).isEqualTo("978-2-86497-011-8");
     }
 
     @Test

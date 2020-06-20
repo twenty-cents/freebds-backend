@@ -105,10 +105,6 @@ public class ReviewServiceTest {
 
     }
 
-    @Test
-    public void setRating() {
-    }
-
     @DisplayName("Find all reviews on a library content")
     @Test
     public void findReviewsByLibraryContent() {

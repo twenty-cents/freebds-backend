@@ -23,7 +23,7 @@ import java.util.List;
 @RequestMapping(value = "/api/series", produces = { MediaType.APPLICATION_JSON_VALUE })
 @Slf4j
 @RequiredArgsConstructor
-@CrossOrigin("*")
+//@CrossOrigin("*")
 public class SerieController {
 
     private final ContextService contextService;

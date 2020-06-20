@@ -18,9 +18,7 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @SpringBootConfiguration
+@TestPropertySource("/freebdsTestResources.properties")
 class GraphicNovelServiceImplTest {
 
     private User user;
@@ -61,15 +60,15 @@ class GraphicNovelServiceImplTest {
 
     private GraphicNovelService graphicNovelService;
 
-    @Configuration
-    static class Config {
-
-        @Bean
-        public static PropertySourcesPlaceholderConfigurer propertiesResolver() {
-            return new PropertySourcesPlaceholderConfigurer();
-        }
-
-    }
+//    @Configuration
+//    static class Config {
+//
+//        @Bean
+//        public static PropertySourcesPlaceholderConfigurer propertiesResolver() {
+//            return new PropertySourcesPlaceholderConfigurer();
+//        }
+//
+//    }
 
     @BeforeEach
     public void setUp() {
